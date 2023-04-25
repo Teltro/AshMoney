@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/recyclerview_radio_icon_image_view"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/radio_text_background"
+    android:padding="6dp"
+    android:text="PRIVET"
+    android:textSize="20sp"
+    android:textStyle="bold" />

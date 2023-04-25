@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/fragmentOperationOperationTypeLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/fragmentOperationOperationTypeTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Operation Type" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/fragmentOperationOperationTypeRecyclerView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:orientation="horizontal"/>
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/fragmentOperationFromAccountLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/fragmentOperationFromAccountTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="From Account" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/fragmentOperationFromAccountRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fragmentOperationToAccountLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <TextView
+                android:id="@+id/fragmentOperationToAccountTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="To Account" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/fragmentOperationToAccountRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fragmentOperationOperationCategoryLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/fragmentOperationOperationCategoryTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Operation category" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/fragmentOperationOperationCategoryRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fragmentOperationOperationNameLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/fragmentOperationOperationNameTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Name" />
+
+            <EditText
+                android:id="@+id/fragmentOperationOperationNameEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:inputType="textPersonName"
+                android:text="Name"
+                android:textSize="24sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fragmentOperationOperationCurrencyLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/fragmentOperationOperationCurrencyTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Operation currency" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/fragmentOperationOperationCurrencyRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fragmentOperationConverterLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="40dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/fragmentOperationOperationConverterTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Converter" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/fragmentOperationConverterFromLayout"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/fragmentOperationConverterFromValueEditText"
+                        android:layout_width="40dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="10"
+                        android:inputType="numberDecimal"
+                        android:text="0.0"
+                        android:textSize="24sp" />
+
+                    <TextView
+                        android:id="@+id/fragmentOperationOperationConvertFromCurrencyTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ASD" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/fragmentOperationConverterToLayout"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/fragmentOperationConverterToValueEditText"
+                        android:layout_width="40dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="10"
+                        android:inputType="numberDecimal"
+                        android:text="0.0"
+                        android:textSize="24sp" />
+
+                    <TextView
+                        android:id="@+id/fragmentOperationOperationConvertToCurrencyTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Sum" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fragmentOperationOperationSumLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/fragmentOperationOperationSumTextView2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sum" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="40dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/fragmentOperationSumFromLayout"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/fragmentOperationSumFromValueEditText"
+                        android:layout_width="40dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="10"
+                        android:inputType="numberDecimal"
+                        android:text="0.0"
+                        android:textSize="24sp" />
+
+                    <TextView
+                        android:id="@+id/fragmentOperationOperationSumFromCurrencyTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ASD" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/fragmentOperationSumToLayout"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/fragmentOperationSumToValueEditText"
+                        android:layout_width="40dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ems="10"
+                        android:inputType="numberDecimal"
+                        android:text="0.0"
+                        android:textSize="24sp" />
+
+                    <TextView
+                        android:id="@+id/fragmentOperationOperationSumToCurrencyTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Sum" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fragmentOperationOperationDateTimeLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/fragmentOperationOperationDateTimeTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Date and time" />
+
+            <EditText
+                android:id="@+id/fragmentOperationOperationDateTimeEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:inputType="textPersonName"
+                android:text="Note"
+                android:textSize="24sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fragmentOperationOperationNoteLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/fragmentOperationOperationNoteTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Note" />
+
+            <EditText
+                android:id="@+id/fragmentOperationOperationNoteEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:inputType="textPersonName"
+                android:text="Note"
+                android:textSize="24sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/fragmentOperationSecondaryActionButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cancel"
+                tools:layout_conversion_absoluteHeight="0dp"
+                tools:layout_conversion_absoluteWidth="202dp"
+                tools:layout_editor_absoluteX="0dp"
+                tools:layout_editor_absoluteY="731dp" />
+
+            <Button
+                android:id="@+id/fragmentOperationPrimaryActionButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Create"
+                tools:layout_conversion_absoluteHeight="0dp"
+                tools:layout_conversion_absoluteWidth="200dp"
+                tools:layout_editor_absoluteX="211dp"
+                tools:layout_editor_absoluteY="731dp" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

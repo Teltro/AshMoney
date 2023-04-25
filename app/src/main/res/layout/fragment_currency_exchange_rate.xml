@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/frameLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
+    tools:context=".fragments.CurrencyExchangeRateFragment">
+
+    <LinearLayout
+        android:id="@+id/fragmentCurrencyExchangeRateCurrencyLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/fragmentCurrencyExchangeRateCurrencyTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Operation currency" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/fragmentCurrencyExchangeRateCurrencyRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+
+        <EditText
+            android:id="@+id/fragmentCurrencyExchangeRateSumEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="numberDecimal" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/fragmentCurrencyExchangeRateRateTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Exchange rate"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/fragmentCurrencyExchangeRateCurrencyLayout" />
+
+    <LinearLayout
+        android:id="@+id/fragmentCurrencyExchangeRateRateHeaderLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/fragmentCurrencyExchangeRateRateTextView">
+
+        <TextView
+            android:id="@+id/textView4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Name" />
+
+        <TextView
+            android:id="@+id/textView10"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Rate" />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/fragmentCurrencyExchangeRateRateRecyclerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/fragmentCurrencyExchangeRateRateHeaderLayout" />
+
+    <View
+        android:id="@+id/h_separator"
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:background="#000000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/fragmentCurrencyExchangeRateRateTextView" />
+
+    <View
+        android:id="@+id/v_separator_1"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="#000000"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/fragmentCurrencyExchangeRateRateTextView" />
+
+    <View
+        android:id="@+id/v_separator_2"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="#000000"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/fragmentCurrencyExchangeRateRateHeaderLayout" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

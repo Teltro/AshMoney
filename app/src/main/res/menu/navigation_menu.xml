@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/accountListFragmentDestination"
+        android:title="Accounts"/>
+
+    <item
+        android:id="@+id/operationListFragmentDestination"
+        android:title="Operations"/>
+
+    <item
+        android:id="@+id/currencyExchangeRateFragment"
+        android:title="Currency exchange rate"/>
+
+</menu>

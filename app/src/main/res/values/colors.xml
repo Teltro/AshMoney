@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+
+
+
+    <color name="iconColor1">#FF0000</color>
+    <color name="iconColor2">#FF8000</color>
+    <color name="iconColor3">#FFFF00</color>
+    <color name="iconColor4">#80FF00</color>
+    <color name="iconColor5">#00FF00</color>
+    <color name="iconColor6">#00FF80</color>
+    <color name="iconColor7">#00FFFF</color>
+    <color name="iconColor8">#0080FF</color>
+    <color name="iconColor9">#0000FF</color>
+    <color name="iconColor10">#8000FF</color>
+    <color name="iconColor11">#FF00FF</color>
+    <color name="iconColor12">#FF0080</color>
+
+    <color name="incomeBackgroundColor">#33008000</color>
+    <color name="expenseBackgroundColor">#33800000</color>
+    <color name="transferBackgroundColor">#33000080</color>
+</resources>
