@@ -260,10 +260,6 @@ class OperationViewModel : ViewModel() {
         }
     }
 
-    private suspend fun getOperationById2(operationId: Int): OperationEntity? {
-        return db.operationDao().getById(operationId)
-    }
-
     fun insertOperation(operation: OperationEntity) {
         viewModelScope.launch {
             db.operationDao().insert(operation)
