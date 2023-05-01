@@ -21,7 +21,7 @@
     </fragment>
     <fragment
         android:id="@+id/accountFragmentDestination"
-        android:name="com.example.ashmoney.fragments.AccountFragment"
+        android:name="com.example.ashmoney.fragments.AccountFragment2"
         android:label="CreateAccountFragment" />
     <fragment
         android:id="@+id/operationListFragmentDestination"
