@@ -1,6 +1,5 @@
 package com.example.ashmoney.viewmodels
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ashmoney.core.MainApp
 import com.example.ashmoney.data.account.AccountWithAllRelations
@@ -30,308 +29,100 @@ interface OperationViewModel2 {
         fun sum(sum: Double)
         fun note(note: String)
 
+        fun primaryActionClicked()
+        fun secondaryActionClicked()
 
-        fun cancelClicked()
-        fun deleteClicked()
-        fun createClicked()
     }
 
     interface Outputs {
         fun state(): StateFlow<State>
         fun operationTypeList(): StateFlow<List<OperationTypeUIModel>>
-        fun selectedOperationType(): OperationTypeUIModel?
+        fun operationType(): StateFlow<OperationTypeUIModel?>
         fun accountList(): StateFlow<List<AccountUIModel>>
-        fun selectedFromAccount(): AccountUIModel
-        fun selectedToAccount(): AccountUIModel
+        fun fromAccount(): StateFlow<AccountUIModel?>
+        fun toAccount(): StateFlow<AccountUIModel?>
         fun operationCategoryList(): StateFlow<List<OperationCategoryUIModel>>
-        fun selectedOperationCategory(): OperationCategoryUIModel
-        fun name(): String
+        fun operationCategory(): StateFlow<OperationCategoryUIModel?>
+        fun name(): StateFlow<String>
         fun currencyList(): StateFlow<List<CurrencyUIModel>>
-        fun selectedCurrency(): CurrencyUIModel
-        fun note(): String
+        fun currency(): StateFlow<CurrencyUIModel?>
+        fun note(): StateFlow<String>
         fun converterState(): StateFlow<ConverterState>
-        fun converterFromCurrency(): StateFlow<CurrencyUIModel>
-        fun converterToCurrency(): StateFlow<CurrencyUIModel>
+        fun converterFromCurrency(): StateFlow<CurrencyUIModel?>
+        fun converterToCurrency(): StateFlow<CurrencyUIModel?>
         fun exchangeRate(): StateFlow<Double>
-        fun sum(): Double
+        fun sum(): StateFlow<Double>
     }
 
 
-    class ViewModel: androidx.lifecycle.ViewModel(), Inputs, Outputs {
+    class ViewModel : androidx.lifecycle.ViewModel(), Inputs, Outputs {
 
         private val db
             get() = MainApp.instance.db
 
-        lateinit var state: MutableStateFlow<State>
+        private val operationDao = db.operationDao()
+        private val operationTypeDao = db.operationTypeDao()
+        private val operationCategoryDao = db.operationCategoryDao()
+        private val accountDao = db.accountDao()
+        private val currencyDao = db.activeCurrencyDao()
 
-        val selectedOperationType: MutableStateFlow<OperationTypeUIModel?>
-        val operationTypeList: StateFlow<List<OperationTypeUIModel>>
-        val selectedFromAccount: MutableStateFlow<AccountUIModel?>
-        val selectedToAccount: MutableStateFlow<AccountUIModel?>
-        val accountList: StateFlow<List<AccountUIModel>>
-        val selectedOperationCategory: MutableStateFlow<OperationCategoryUIModel?>
-        val operationCategoryList: StateFlow<List<OperationCategoryUIModel>>
-        val selectedCurrency: MutableStateFlow<CurrencyUIModel?>
-        // TODO find the way to enable collect for selected accounts only for transfer operation type
-        val currencyList: StateFlow<List<CurrencyUIModel>>
-        val converterState: MutableStateFlow<ConverterState>
+        private lateinit var state: MutableStateFlow<State>
 
-        private val dataFlow: Flow<Unit> = combine(
-            selectedOperationType,
-            selectedFromAccount,
-            selectedToAccount,
-            currencyList,
-            selectedCurrency
-        ) { selectedOperationType, fromAccount, toAccount, currencyList, selectedCurrency ->
-            //var converterState = ConverterState.NONE
-            var converterState = ConverterState.WITHOUT_CONVERTER
-            var currencyExchangeRate: Double? = 1.0
+        private val operationType: MutableStateFlow<OperationTypeUIModel?> = MutableStateFlow(null)
 
-            if (selectedOperationType != null && currencyList.isNotEmpty()) {
-                val operationType = OperationType.fromId(selectedOperationType.id)
-                if (operationType != null) {
-                    if (currencyList.size == 1) {
-                        //converterState = ConverterState.ONLY_ONE_CURRENCY
-                        converterState = ConverterState.WITHOUT_CONVERTER
-                    } else {
-                        when (operationType) {
-                            OperationType.INCOME -> {
-                                if (toAccount != null && selectedCurrency != null) {
-                                    val accountCurrencyId =
-                                        (toAccount as AccountWithAllRelations).activeCurrency.id
-                                    if (selectedCurrency.id == accountCurrencyId) {
-                                        //converterState = ConverterState.CHANGE_TARGET_CURRENCY
-                                        converterState = ConverterState.WITHOUT_CONVERTER
-                                    } else {
-                                        //converterState = ConverterState.CHANGE_ANOTHER_CURRENCY
-                                        converterState = ConverterState.WITH_CONVERTER
-                                        currencyExchangeRate = db.currencyExchangeRateDao()
-                                            .getCurrencyExchangeRateValueByCurrencyId(
-                                                selectedCurrency.id,
-                                                accountCurrencyId
-                                            )
-                                    }
-                                }
-                            }
-
-                            OperationType.EXPENSE -> {
-                                if (fromAccount != null && selectedCurrency != null) {
-                                    val accountCurrencyId =
-                                        (fromAccount as AccountWithAllRelations).activeCurrency.id
-                                    if (selectedCurrency.id == accountCurrencyId) {
-                                        //converterState = ConverterState.CHANGE_TARGET_CURRENCY
-                                        converterState = ConverterState.WITHOUT_CONVERTER
-                                    } else {
-                                        //converterState = ConverterState.CHANGE_ANOTHER_CURRENCY
-                                        converterState = ConverterState.WITH_CONVERTER
-                                        currencyExchangeRate = db.currencyExchangeRateDao()
-                                            .getCurrencyExchangeRateValueByCurrencyId(
-                                                accountCurrencyId,
-                                                selectedCurrency.id
-                                            )
-                                    }
-                                }
-                            }
-
-                            OperationType.TRANSFER -> {
-                                if (fromAccount != null && toAccount != null && selectedCurrency != null) {
-                                    val accountFromCurrencyId =
-                                        (fromAccount as AccountWithAllRelations).activeCurrency.id
-                                    val accountToCurrencyId =
-                                        (toAccount as AccountWithAllRelations).activeCurrency.id
-
-                                    if (selectedCurrency.id == accountFromCurrencyId) {
-                                        //converterState = ConverterState.TRANSFER_FROM_CURRENCY
-                                        converterState = ConverterState.WITH_CONVERTER
-                                        currencyExchangeRate = db.currencyExchangeRateDao()
-                                            .getCurrencyExchangeRateValueByCurrencyId(
-                                                accountToCurrencyId,
-                                                accountFromCurrencyId
-                                            )
-                                    } else if (selectedCurrency.id == accountToCurrencyId) {
-                                        //converterState = ConverterState.TRANSFER_TO_CURRENCY
-                                        converterState = ConverterState.WITH_CONVERTER
-                                        currencyExchangeRate = db.currencyExchangeRateDao()
-                                            .getCurrencyExchangeRateValueByCurrencyId(
-                                                accountFromCurrencyId,
-                                                accountToCurrencyId
-                                            )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            data.currencyExchangeRate = currencyExchangeRate
-            this.converterState.value = converterState
-        }
-
-        init {
-            //state =
-
-            selectedOperationType = MutableStateFlow(null)
-
-            operationTypeList = db.operationTypeDao().getAllFlow()
+        private val operationTypeList: StateFlow<List<OperationTypeUIModel>> =
+            operationTypeDao.getAllFlow()
                 .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-            selectedFromAccount = MutableStateFlow(null)
+        private val fromAccount: MutableStateFlow<AccountUIModel?> = MutableStateFlow(null)
+        private val toAccount: MutableStateFlow<AccountUIModel?> = MutableStateFlow(null)
 
-            selectedToAccount = MutableStateFlow(null)
-
-            accountList = db.accountDao().getAllWithAllRelationsFlow()
+        private val accountList: StateFlow<List<AccountUIModel>> =
+            accountDao.getAllWithAllRelationsFlow()
                 .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-            selectedOperationCategory = MutableStateFlow(null)
+        private val operationCategory: MutableStateFlow<OperationCategoryUIModel?> = MutableStateFlow(null)
 
-            operationCategoryList = db.operationCategoryDao()
-                .getAllWithAllRelationsFlow()
-                .combine(selectedOperationType) { operationCategoryList, selectedOperationType ->
+        private val operationCategoryList: StateFlow<List<OperationCategoryUIModel>> =
+            operationCategoryDao.getAllWithAllRelationsFlow()
+                .combine(operationType) { operationCategoryList, selectedOperationType ->
                     operationCategoryList.filter { it.operationCategory.operationTypeId == selectedOperationType?.id }
                 }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-            selectedCurrency = MutableStateFlow(null)
+        private val currency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
+        private val converterFromCurrency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
+        private val converterToCurrency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
+        private val exchangeRate: MutableStateFlow<Double> = MutableStateFlow(1.0)
+        private val sum: MutableStateFlow<Double> = MutableStateFlow(0.0)
 
-            // TODO find the way to enable collect for selected accounts only for transfer operation type
-            currencyList = combine(
-                db.activeCurrencyDao().getAllFlow(),
-                selectedOperationType,
-                selectedFromAccount,
-                selectedToAccount
-            ) { currencyList, type, fromAccount, toAccount ->
-                // transfer
-                if (type?.id == OperationType.TRANSFER.id) {
-                    if (fromAccount != null || toAccount != null) {
-                        currencyList.filter {
-                            (fromAccount != null) && it.id == (fromAccount as AccountWithAllRelations).activeCurrency.id ||
-                                    (toAccount != null) && it.id == (toAccount as AccountWithAllRelations).activeCurrency.id
-                        }
-                    } else {
-                        emptyList()
+        private val name: MutableStateFlow<String> = MutableStateFlow("")
+        private val note: MutableStateFlow<String> = MutableStateFlow("")
+
+        // TODO find the way to enable collect for selected accounts only for transfer operation type
+        private val currencyList: StateFlow<List<CurrencyUIModel>> = combine(
+            currencyDao.getAllFlow(),
+            operationType,
+            fromAccount,
+            toAccount
+        ) { currencyList, type, fromAccount, toAccount ->
+            // transfer
+            if (type?.id == OperationType.TRANSFER.id) {
+                if (fromAccount != null || toAccount != null) {
+                    currencyList.filter {
+                        (fromAccount != null) && it.id == (fromAccount as AccountWithAllRelations).activeCurrency.id ||
+                                (toAccount != null) && it.id == (toAccount as AccountWithAllRelations).activeCurrency.id
                     }
-                }
-                // income or expense
-                else {
-                    currencyList
-                }
-            }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
-            converterState = MutableStateFlow(ConverterState.WITHOUT_CONVERTER)
-        }
-
-        fun start(operationId: Int?) {
-            if (data.operationId == operationId)
-                return
-            else {
-                state = MutableStateFlow(State.INIT)
-                viewModelScope.launch {
-
-                    when {
-                        operationId == null -> startNoneState()
-                        operationId == -1 -> startCreateState()
-                        operationId >= 0 -> startInfoState(operationId)
-                    }
-
-                    dataFlow.collect()
-
-                }
-            }
-        }
-
-        private fun startNoneState() {
-            data.clean()
-            state.value = State.NONE
-        }
-
-        private fun startCreateState() {
-            data.clean()
-            state.value = State.CREATE
-        }
-
-        private suspend fun startInfoState(operationId: Int) {
-            db.operationDao().getWithAllRelationsById(operationId)?.run {
-                data.let {
-                    it.operationId = operationId
-                    it.operationType = operationType
-                    it.accountFrom = fromAccount
-                    it.accountTo = toAccount
-                    it.operationCategory = operationCategory
-                    it.name = operation.name
-                    it.currency = activeCurrency
-                    it.dateTime = operation.dateTime
-                    it.currencyExchangeRate = operation.exchangeRateCoefficient
-                    it.amountValue = operation.sum
-                    it.note = operation.note
-                }
-                selectedOperationType.value = operationType
-                state.value = State.INFO
-            } ?: run {
-                // TODO error? back?
-                startNoneState()
-            }
-        }
-
-        fun getOperationFromCurrentData(): OperationEntity? {
-            with(data) {
-                val _id = operationId?.let {
-                    if (it > 0) it
-                    else 0
-                } ?: 0
-                val _operationType = operationType
-                val _accountFrom = accountFrom
-                val _accountTo = accountTo
-                val _operationCategory = operationCategory
-                val _name = name
-                val _amountValue = amountValue
-                val _currency = currency
-                val _note = note
-                if (
-                    _operationType != null &&
-                    _name != null &&
-                    _amountValue != null &&
-                    _currency != null &&
-                    _note != null
-                ) {
-                    return OperationEntity(
-                        id = _id,
-                        name = _name,
-                        operationTypeId = (_operationType as OperationTypeEntity).id,
-                        toAccountId = (_accountTo as? AccountWithAllRelations)?.id,
-                        fromAccountId = (_accountFrom as? AccountWithAllRelations)?.id,
-                        operationCategoryId = (_operationCategory as? OperationCategoryWithAllRelations)?.id,
-                        activeCurrencyId = 1,
-                        sum = _amountValue,
-                        dateTime = Date().toIsoString(),
-                        note = _note,
-                    )
                 } else {
-                    return null
+                    emptyList()
                 }
             }
-        }
-
-        private suspend fun getOperationById2(operationId: Int): OperationEntity? {
-            return db.operationDao().getById(operationId)
-        }
-
-        fun insertOperation(operation: OperationEntity) {
-            viewModelScope.launch {
-                db.operationDao().insert(operation)
+            // income or expense
+            else {
+                currencyList
             }
-        }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-        fun deleteOperation(operation: OperationEntity) {
-            viewModelScope.launch {
-                db.operationDao().delete(operation)
-            }
-        }
-
-        fun deleteOperation(operationId: Int) {
-            viewModelScope.launch {
-                db.operationDao().deleteById(operationId)
-            }
-        }
+        private val converterState: MutableStateFlow<ConverterState> = MutableStateFlow(ConverterState.NONE)
 
 
         // INPUTS
@@ -371,65 +162,46 @@ interface OperationViewModel2 {
             TODO("Not yet implemented")
         }
 
-        override fun cancelClicked() {
+        override fun primaryActionClicked() {
             TODO("Not yet implemented")
         }
 
-        override fun deleteClicked() {
+        override fun secondaryActionClicked() {
             TODO("Not yet implemented")
         }
-
-        override fun createClicked() {
-            TODO("Not yet implemented")
-        }
-
 
         // OUTPUTS
         override fun state(): StateFlow<State> = state
 
         override fun operationTypeList(): StateFlow<List<OperationTypeUIModel>> = operationTypeList
-        override fun selectedOperationType(): OperationTypeUIModel? = selectedOperationType
-
+        override fun operationType(): StateFlow<OperationTypeUIModel?> = operationType
         override fun accountList(): StateFlow<List<AccountUIModel>> = accountList
-        override fun selectedFromAccount(): AccountUIModel = selectedFromAccount
-        override fun selectedToAccount(): AccountUIModel = selectedToAccount
-
-        override fun operationCategoryList(): StateFlow<List<OperationCategoryUIModel>> = operationCategoryList
-        override fun selectedOperationCategory(): OperationCategoryUIModel = selectedOperationCategory
-
-        override fun name(): String {
-        }
-
+        override fun fromAccount(): StateFlow<AccountUIModel?> = fromAccount
+        override fun toAccount(): StateFlow<AccountUIModel?> = toAccount
+        override fun operationCategoryList(): StateFlow<List<OperationCategoryUIModel>> =
+            operationCategoryList
+        override fun operationCategory(): StateFlow<OperationCategoryUIModel?> = operationCategory
+        override fun name(): StateFlow<String> = name
         override fun currencyList(): StateFlow<List<CurrencyUIModel>> = currencyList
-        override fun selectedCurrency(): CurrencyUIModel = selectedCurrency
-
-        override fun note(): String {
-        }
-
+        override fun currency(): StateFlow<CurrencyUIModel?> = currency
+        override fun note(): StateFlow<String> = note
         override fun converterState(): StateFlow<ConverterState> = converterState
-
-        override fun converterFromCurrency(): StateFlow<CurrencyUIModel> {
-        }
-
-        override fun converterToCurrency(): StateFlow<CurrencyUIModel> {
-        }
-
-        override fun exchangeRate(): StateFlow<Double> {
-        }
-
-        override fun sum(): Double {
-        }
+        override fun converterFromCurrency(): StateFlow<CurrencyUIModel?> = converterFromCurrency
+        override fun converterToCurrency(): StateFlow<CurrencyUIModel?> = converterToCurrency
+        override fun exchangeRate(): StateFlow<Double> = exchangeRate
+        override fun sum(): StateFlow<Double> = sum
     }
 
-        enum class State {
-            NONE,
-            INIT,
-            CREATE,
-            INFO
-        }
+    enum class State {
+        NONE,
+        INIT,
+        CREATE,
+        INFO
+    }
 
-        enum class ConverterState {
-            WITHOUT_CONVERTER,
-            WITH_CONVERTER,
-        }
+    enum class ConverterState {
+        NONE,
+        WITHOUT_CONVERTER,
+        WITH_CONVERTER,
+    }
 }
