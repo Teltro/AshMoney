@@ -19,6 +19,7 @@ import com.example.ashmoney.adapters.IconColorRadioAdapter
 import com.example.ashmoney.adapters.IconRadioAdapter
 import com.example.ashmoney.databinding.FragmentAccountBinding
 import com.example.ashmoney.itemDecorations.RadioItemDecoration
+import com.example.ashmoney.utils.toEditable
 import com.example.ashmoney.viewmodels.AccountViewModel2
 import kotlinx.coroutines.launch
 
@@ -57,8 +58,12 @@ class AccountFragment2 : Fragment() {
         setupIconList()
         setupIconColorList()
         setupCurrencyList()
+        setupNameField()
+        setupSumField()
+        setupNoteField()
+        setupButtons()
+        setupLeavePage()
 
-        setupFieldListeners()
         startUiStateManaging()
     }
 
@@ -72,10 +77,12 @@ class AccountFragment2 : Fragment() {
                 viewModel.outputs.iconList().collect(iconAdapter::submitList)
             }
             launch {
-                viewModel.outputs.selectedIcon().collect { iconAdapter.selectedItem = it }
+                viewModel.outputs.icon().collect { iconAdapter.selectedItem = it }
+            }
+            launch {
+                viewModel.outputs.iconColor().collect { iconAdapter.iconColor = it }
             }
         }
-        //viewModel.iconList.observe(viewLifecycleOwner, iconAdapter::submitList)
     }
 
     private fun setupIconColorList() {
@@ -88,11 +95,10 @@ class AccountFragment2 : Fragment() {
                 viewModel.outputs.iconColorList().collect(iconColorAdapter::submitList)
             }
             launch {
-                viewModel.outputs.selectedIconColor().collect { iconColorAdapter.selectedItem = it }
+                viewModel.outputs.iconColor().collect { iconColorAdapter.selectedItem = it }
             }
 
         }
-        //viewModel.iconColorList.observe(viewLifecycleOwner, iconColorAdapter::submitList)
     }
 
     private fun setupCurrencyList() {
@@ -102,10 +108,13 @@ class AccountFragment2 : Fragment() {
         setupDefaultHorizontalList(binding.fragmentAccountCurrencyRecyclerView, currencyAdapter)
 
         lifecycleScope.launch {
-            viewModel.outputs.currencyList().collect(currencyAdapter::submitList)
+            launch {
+                viewModel.outputs.currencyList().collect(currencyAdapter::submitList)
+            }
+            launch {
+                viewModel.outputs.currency().collect { currencyAdapter.selectedItem = it }
+            }
         }
-
-        //viewModel.currencyList.observe(viewLifecycleOwner, currencyAdapter::submitList)
     }
 
     private fun setupDefaultHorizontalList(
@@ -128,20 +137,63 @@ class AccountFragment2 : Fragment() {
         }
     }
 
-    private fun setupFieldListeners() {
-        binding.fragmentAccountNameTextView.doAfterTextChanged {
-            viewModel.inputs.name(it.toString())
+    private fun setupNameField() {
+        with(binding) {
+            lifecycleScope.launch {
+                viewModel.outputs.name().collect {
+                    fragmentAccountNameTextView.text = it.toEditable()
+                }
+            }
+            fragmentAccountNameTextView.doAfterTextChanged {
+                viewModel.inputs.name(it.toString())
+            }
         }
-        binding.fragmentAccountStartAmountTextView.doAfterTextChanged {
-            val inputValue = if (it != null && it.isNotEmpty())
-                it.toString().toDouble()
-            else
-                0.0
-            viewModel.inputs.sum(inputValue)
+    }
+
+    private fun setupSumField() {
+        with(binding) {
+            lifecycleScope.launch {
+                viewModel.outputs.sum().collect { fragmentAccountStartAmountTextView.text = it.toString().toEditable() }
+            }
+            fragmentAccountStartAmountTextView.doAfterTextChanged {
+                val inputValue = if (it != null && it.isNotEmpty())
+                    it.toString().toDouble()
+                else
+                    0.0
+                viewModel.inputs.sum(inputValue)
+            }
         }
-        binding.fragmentAccountNoteTextView.doAfterTextChanged {
-            viewModel.inputs.note(it.toString())
+    }
+
+    private fun setupNoteField() {
+        with(binding) {
+            lifecycleScope.launch {
+                viewModel.outputs.note().collect { fragmentAccountNoteTextView.text = it.toEditable() }
+            }
+            fragmentAccountNoteTextView.doAfterTextChanged {
+                viewModel.inputs.note(it.toString())
+            }
         }
+    }
+
+    private fun setupButtons() {
+        with(binding) {
+            fragmentAccountPrimaryActionButton.setOnClickListener {
+                viewModel.primaryActionClick()
+            }
+            fragmentAccountSecondaryActionButton.setOnClickListener {
+                viewModel.secondaryActionClick()
+            }
+        }
+    }
+
+    private fun setupLeavePage() {
+        lifecycleScope.launch {
+            viewModel.leavePage().collect {
+                navController.popBackStack()
+            }
+        }
+
     }
 
     private fun startUiStateManaging() {
@@ -149,7 +201,7 @@ class AccountFragment2 : Fragment() {
             viewModel.outputs.uiState().collect {
                 with(binding) {
                     fragmentAccountPrimaryActionButton.text = it.primaryActionButtonText
-                    fragmentAccountSecondaryActionButton.text = it.primaryActionButtonText
+                    fragmentAccountSecondaryActionButton.text = it.secondaryActionButtonText
                 }
             }
         }

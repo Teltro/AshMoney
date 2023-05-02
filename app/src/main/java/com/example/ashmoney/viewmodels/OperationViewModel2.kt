@@ -1,5 +1,6 @@
 package com.example.ashmoney.viewmodels
 
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewModelScope
 import com.example.ashmoney.core.MainApp
 import com.example.ashmoney.data.account.AccountWithAllRelations
@@ -35,7 +36,8 @@ interface OperationViewModel2 {
     }
 
     interface Outputs {
-        fun state(): StateFlow<State>
+        fun uiState(): StateFlow<UIState>
+        fun membersUIState(): StateFlow<MembersUIState>
         fun operationTypeList(): StateFlow<List<OperationTypeUIModel>>
         fun operationType(): StateFlow<OperationTypeUIModel?>
         fun accountList(): StateFlow<List<AccountUIModel>>
@@ -46,14 +48,13 @@ interface OperationViewModel2 {
         fun name(): StateFlow<String>
         fun currencyList(): StateFlow<List<CurrencyUIModel>>
         fun currency(): StateFlow<CurrencyUIModel?>
-        fun note(): StateFlow<String>
         fun converterState(): StateFlow<ConverterState>
         fun converterFromCurrency(): StateFlow<CurrencyUIModel?>
         fun converterToCurrency(): StateFlow<CurrencyUIModel?>
         fun exchangeRate(): StateFlow<Double>
         fun sum(): StateFlow<Double>
+        fun note(): StateFlow<String>
     }
-
 
     class ViewModel : androidx.lifecycle.ViewModel(), Inputs, Outputs {
 
@@ -66,37 +67,34 @@ interface OperationViewModel2 {
         private val accountDao = db.accountDao()
         private val currencyDao = db.activeCurrencyDao()
 
-        private lateinit var state: MutableStateFlow<State>
+        private var state: MutableStateFlow<State> = MutableStateFlow(State.NONE)
 
-        private val operationType: MutableStateFlow<OperationTypeUIModel?> = MutableStateFlow(null)
+        private val uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.none())
 
         private val operationTypeList: StateFlow<List<OperationTypeUIModel>> =
             operationTypeDao.getAllFlow()
                 .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-        private val fromAccount: MutableStateFlow<AccountUIModel?> = MutableStateFlow(null)
-        private val toAccount: MutableStateFlow<AccountUIModel?> = MutableStateFlow(null)
+        private val operationType: MutableStateFlow<OperationTypeUIModel?> = MutableStateFlow(null)
+
+        private val membersUIState: StateFlow<MembersUIState> = operationType.map { it ->
+            val operationType = it?.let { OperationType.fromId(it.id) }
+            MembersUIState.fromOperationType(operationType)
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, MembersUIState.none())
 
         private val accountList: StateFlow<List<AccountUIModel>> =
             accountDao.getAllWithAllRelationsFlow()
                 .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
-        private val operationCategory: MutableStateFlow<OperationCategoryUIModel?> = MutableStateFlow(null)
-
+        private val fromAccount: MutableStateFlow<AccountUIModel?> = MutableStateFlow(null)
+        private val toAccount: MutableStateFlow<AccountUIModel?> = MutableStateFlow(null)
         private val operationCategoryList: StateFlow<List<OperationCategoryUIModel>> =
             operationCategoryDao.getAllWithAllRelationsFlow()
                 .combine(operationType) { operationCategoryList, selectedOperationType ->
                     operationCategoryList.filter { it.operationCategory.operationTypeId == selectedOperationType?.id }
                 }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-        private val currency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
-        private val converterFromCurrency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
-        private val converterToCurrency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
-        private val exchangeRate: MutableStateFlow<Double> = MutableStateFlow(1.0)
-        private val sum: MutableStateFlow<Double> = MutableStateFlow(0.0)
-
-        private val name: MutableStateFlow<String> = MutableStateFlow("")
-        private val note: MutableStateFlow<String> = MutableStateFlow("")
+        private val operationCategory: MutableStateFlow<OperationCategoryUIModel?> =
+            MutableStateFlow(null)
 
         // TODO find the way to enable collect for selected accounts only for transfer operation type
         private val currencyList: StateFlow<List<CurrencyUIModel>> = combine(
@@ -122,7 +120,16 @@ interface OperationViewModel2 {
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-        private val converterState: MutableStateFlow<ConverterState> = MutableStateFlow(ConverterState.NONE)
+        private val currency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
+        private val converterFromCurrency: MutableStateFlow<CurrencyUIModel?> =
+            MutableStateFlow(null)
+        private val converterToCurrency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
+        private val exchangeRate: MutableStateFlow<Double> = MutableStateFlow(1.0)
+        private val sum: MutableStateFlow<Double> = MutableStateFlow(0.0)
+        private val name: MutableStateFlow<String> = MutableStateFlow("")
+        private val note: MutableStateFlow<String> = MutableStateFlow("")
+        private val converterState: MutableStateFlow<ConverterState> =
+            MutableStateFlow(ConverterState.NONE)
 
 
         // INPUTS
@@ -180,6 +187,7 @@ interface OperationViewModel2 {
         override fun toAccount(): StateFlow<AccountUIModel?> = toAccount
         override fun operationCategoryList(): StateFlow<List<OperationCategoryUIModel>> =
             operationCategoryList
+
         override fun operationCategory(): StateFlow<OperationCategoryUIModel?> = operationCategory
         override fun name(): StateFlow<String> = name
         override fun currencyList(): StateFlow<List<CurrencyUIModel>> = currencyList
@@ -192,16 +200,74 @@ interface OperationViewModel2 {
         override fun sum(): StateFlow<Double> = sum
     }
 
-    enum class State {
-        NONE,
-        INIT,
-        CREATE,
-        INFO
+    data class UIState(
+        val enableChange: Boolean,
+        val primaryActionButtonText: String,
+        val secondaryActionButtonText: String,
+    ) {
+        companion object {
+            fun info(): UIState =
+                UIState(
+                    false,
+                    "Изменить",
+                    "Удалить"
+                )
+
+            fun create(): UIState =
+                UIState(
+                    true,
+                    "Создать",
+                    "Отменить"
+                )
+
+            fun none(): UIState =
+                UIState(
+                    false,
+                    "",
+                    ""
+                )
+
+            fun fromState(state: State) =
+                when (state) {
+                    State.NONE, State.INIT -> none()
+                    State.INFO -> info()
+                    State.CREATE -> create()
+                }
+        }
     }
 
-    enum class ConverterState {
-        NONE,
-        WITHOUT_CONVERTER,
-        WITH_CONVERTER,
+}
+
+data class MembersUIState(
+    val fromAccountVisible: Boolean,
+    val toAccountVisible: Boolean,
+    val operationCategoryVisible: Boolean
+) {
+    companion object {
+        fun income() = MembersUIState(false, true, true)
+        fun expense() = MembersUIState(true, false, true)
+        fun transfer() = MembersUIState(true, true, false)
+        fun none() = MembersUIState(false, false, false)
+        fun fromOperationType(operationType: OperationType?) = when (operationType) {
+            OperationType.INCOME -> income()
+            OperationType.EXPENSE -> expense()
+            OperationType.TRANSFER -> transfer()
+            null -> none()
+        }
+
     }
+}
+
+enum class State {
+    NONE,
+    INIT,
+    CREATE,
+    INFO
+}
+
+enum class ConverterState {
+    NONE,
+    WITHOUT_CONVERTER,
+    WITH_CONVERTER,
+}
 }

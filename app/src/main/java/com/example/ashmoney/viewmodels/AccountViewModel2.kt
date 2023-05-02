@@ -33,11 +33,11 @@ interface AccountViewModel2 {
         //fun state(): StateFlow<State>
         fun name(): StateFlow<String>
         fun iconList(): StateFlow<List<IconUIModel>>
-        fun selectedIcon(): StateFlow<IconUIModel?>
+        fun icon(): StateFlow<IconUIModel?>
         fun iconColorList(): StateFlow<List<IconColorUIModel>>
-        fun selectedIconColor(): StateFlow<IconColorUIModel?>
+        fun iconColor(): StateFlow<IconColorUIModel?>
         fun currencyList(): StateFlow<List<CurrencyUIModel>>
-        fun selectedCurrency(): StateFlow<CurrencyUIModel?>
+        fun currency(): StateFlow<CurrencyUIModel?>
         fun sum(): StateFlow<Double>
         fun note(): StateFlow<String>
         fun leavePage(): SharedFlow<Unit>
@@ -117,10 +117,12 @@ interface AccountViewModel2 {
                 currentAccountId = accountId
                 state.value = State.INIT
                 viewModelScope.launch {
-                    when {
-                        accountId == null -> state.value = State.NONE
-                        accountId == -1 -> state.value = State.CREATE
-                        accountId >= 0 -> state.value = State.UPDATE
+                    state.run {
+                        when {
+                            accountId == null -> value = State.NONE
+                            accountId == -1 -> value = State.CREATE
+                            accountId >= 0 -> value = State.INFO
+                        }
                     }
                 }
             }
@@ -171,7 +173,7 @@ interface AccountViewModel2 {
             } ?: 0
             val _accountName = name.value
             val _amountValue = sum.value
-            val _note = note
+            val _note = note.value
             val _currency = currency.value
             val _icon = icon.value
             val _iconColor = iconColor.value
@@ -249,11 +251,11 @@ interface AccountViewModel2 {
         //override fun state(): StateFlow<State> = state
         override fun name(): StateFlow<String> = name
         override fun iconList(): StateFlow<List<IconUIModel>> = iconList
-        override fun selectedIcon(): StateFlow<IconUIModel?> = icon
+        override fun icon(): StateFlow<IconUIModel?> = icon
         override fun iconColorList(): StateFlow<List<IconColorUIModel>> = iconColorList
-        override fun selectedIconColor(): StateFlow<IconColorUIModel?> = iconColor
+        override fun iconColor(): StateFlow<IconColorUIModel?> = iconColor
         override fun currencyList(): StateFlow<List<CurrencyUIModel>> = currencyList
-        override fun selectedCurrency(): StateFlow<CurrencyUIModel?> = currency
+        override fun currency(): StateFlow<CurrencyUIModel?> = currency
         override fun sum(): StateFlow<Double> = sum
         override fun note(): StateFlow<String> = note
         override fun leavePage(): SharedFlow<Unit> = leavePage
