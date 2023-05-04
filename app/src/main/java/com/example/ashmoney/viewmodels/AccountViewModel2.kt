@@ -82,26 +82,16 @@ interface AccountViewModel2 {
             viewModelScope.launch {
                 state.collect {
                     when (it) {
-                        State.NONE, State.INIT -> {
-                            cleanData()
+                        State.NONE, State.INIT, State.CREATE -> {
+                            cleanAccountData()
                         }
+
                         State.INFO -> {
-                            currentAccountId?.let { id ->
-                                accountEntity = accountDao.getWithAllRelationsById(id)
-                                accountEntity
-                            }?.let { accountData ->
-                                name.value = accountData.account.name
-                                sum.value = accountData.account.amountValue
-                                note.value = ""
-                                currency.value = accountData.activeCurrency
-                                icon.value = accountData.icon
-                                iconColor.value = accountData.iconColor
-                                //state = State.INFO
-                            } ?: run { state.value = State.NONE }
+                            val result = loadAccountData();
+                            if (!result)
+                                state.value = State.NONE
                         }
-                        State.CREATE -> {
-                            cleanData()
-                        }
+
                         else -> {}
                     }
 
@@ -111,13 +101,11 @@ interface AccountViewModel2 {
         }
 
         fun start(accountId: Int?) {
-            if (currentAccountId == accountId)
-                return
-            else {
+            if (currentAccountId != accountId) {
                 currentAccountId = accountId
-                state.value = State.INIT
-                viewModelScope.launch {
-                    state.run {
+                state.run {
+                    value = State.INIT
+                    viewModelScope.launch {
                         when {
                             accountId == null -> value = State.NONE
                             accountId == -1 -> value = State.CREATE
@@ -128,13 +116,29 @@ interface AccountViewModel2 {
             }
         }
 
-        private fun cleanData() {
+        private fun cleanAccountData() {
             name.value = ""
             sum.value = 0.0
             note.value = ""
             currency.value = null
             icon.value = null
             iconColor.value = null
+        }
+
+        private suspend fun loadAccountData(): Boolean {
+            currentAccountId?.let { id ->
+                accountEntity = accountDao.getWithAllRelationsById(id)
+                accountEntity
+            }?.let { accountData ->
+                name.value = accountData.account.name
+                sum.value = accountData.account.amountValue
+                note.value = ""
+                currency.value = accountData.activeCurrency
+                icon.value = accountData.icon
+                iconColor.value = accountData.iconColor
+                //state = State.INFO
+                return true
+            } ?: return false
         }
 
         private suspend fun _leavePage() {
@@ -224,6 +228,7 @@ interface AccountViewModel2 {
                     create()
                     _leavePage()
                 }
+
                 State.UPDATE -> {
                     viewModelScope.launch {
                         update()
@@ -240,6 +245,7 @@ interface AccountViewModel2 {
                     delete()
                     _leavePage()
                 }
+
                 State.CREATE -> viewModelScope.launch { _leavePage() }
                 State.UPDATE -> state.value = State.INFO
             }

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.ashmoney.core.MainApp
 import com.example.ashmoney.data.account.AccountWithAllRelations
 import com.example.ashmoney.data.operation.OperationEntity
+import com.example.ashmoney.data.operation.OperationWithAllRelations
 import com.example.ashmoney.data.operationCategory.OperationCategoryWithAllRelations
 import com.example.ashmoney.data.operationType.OperationTypeEntity
 import com.example.ashmoney.models.ui.AccountUIModel
@@ -68,6 +69,8 @@ interface OperationViewModel2 {
         private val currencyDao = db.activeCurrencyDao()
 
         private var state: MutableStateFlow<State> = MutableStateFlow(State.NONE)
+        private var currentOperationId: Int? = null
+        private var operationEntity: OperationWithAllRelations? = null
 
         private val uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.none())
 
@@ -132,6 +135,74 @@ interface OperationViewModel2 {
             MutableStateFlow(ConverterState.NONE)
 
 
+        init {
+            viewModelScope.launch {
+                state.collect {
+                    when (it) {
+                        State.NONE, State.INIT, State.CREATE -> {
+                            cleanOperationData()
+                        }
+
+                        State.INFO -> {
+                            val result = loadOperationData();
+                            if (!result)
+                                state.value = State.NONE
+                        }
+
+                        else -> {}
+                    }
+
+                    uiState.value = UIState.fromState(it)
+                }
+            }
+        }
+
+        fun start(operationId: Int?) {
+            if (currentOperationId != operationId) {
+                currentOperationId = operationId
+                state.run {
+                    value = State.INIT
+                    viewModelScope.launch {
+                        when {
+                            operationId == null -> value = State.NONE
+                            operationId == -1 -> value = State.CREATE
+                            operationId >= 0 -> value = State.INFO
+                        }
+                    }
+                }
+            }
+        }
+
+        private fun cleanOperationData() {
+            operationType.value = null
+            fromAccount.value = null
+            toAccount.value = null
+            operationCategory.value = null
+            currency.value = null
+            name.value = ""
+            exchangeRate.value = 1.0
+            sum.value = 0.0
+            note.value = ""
+        }
+
+        private suspend fun loadOperationData(): Boolean {
+            currentOperationId?.let { id ->
+                operationEntity = operationDao.getWithAllRelationsById(id)
+                operationEntity
+            }?.let { operationData ->
+                operationType.value = operationData.operationType
+                fromAccount.value = operationData.fromAccount
+                toAccount.value = operationData.toAccount
+                operationCategory.value = operationData.operationCategory
+                currency.value = operationData.activeCurrency
+                name.value = operationData.operation.name ?: ""
+                exchangeRate.value = operationData.operation.exchangeRateCoefficient
+                sum.value = operationData.operation.sum
+                note.value = ""
+                return true
+            } ?: return false
+        }
+
         // INPUTS
         override fun operationType(operationType: OperationTypeUIModel) {
             TODO("Not yet implemented")
@@ -178,8 +249,6 @@ interface OperationViewModel2 {
         }
 
         // OUTPUTS
-        override fun state(): StateFlow<State> = state
-
         override fun operationTypeList(): StateFlow<List<OperationTypeUIModel>> = operationTypeList
         override fun operationType(): StateFlow<OperationTypeUIModel?> = operationType
         override fun accountList(): StateFlow<List<AccountUIModel>> = accountList
@@ -236,38 +305,55 @@ interface OperationViewModel2 {
         }
     }
 
-}
+    data class MembersUIState(
+        val fromAccountVisible: Boolean,
+        val toAccountVisible: Boolean,
+        val operationCategoryVisible: Boolean
+    ) {
+        companion object {
+            fun income() = MembersUIState(
+                fromAccountVisible = false,
+                toAccountVisible = true,
+                operationCategoryVisible = true
+            )
 
-data class MembersUIState(
-    val fromAccountVisible: Boolean,
-    val toAccountVisible: Boolean,
-    val operationCategoryVisible: Boolean
-) {
-    companion object {
-        fun income() = MembersUIState(false, true, true)
-        fun expense() = MembersUIState(true, false, true)
-        fun transfer() = MembersUIState(true, true, false)
-        fun none() = MembersUIState(false, false, false)
-        fun fromOperationType(operationType: OperationType?) = when (operationType) {
-            OperationType.INCOME -> income()
-            OperationType.EXPENSE -> expense()
-            OperationType.TRANSFER -> transfer()
-            null -> none()
+            fun expense() = MembersUIState(
+                fromAccountVisible = true,
+                toAccountVisible = false,
+                operationCategoryVisible = true
+            )
+
+            fun transfer() = MembersUIState(
+                fromAccountVisible = true,
+                toAccountVisible = true,
+                operationCategoryVisible = false
+            )
+
+            fun none() = MembersUIState(
+                fromAccountVisible = false,
+                toAccountVisible = false,
+                operationCategoryVisible = false
+            )
+
+            fun fromOperationType(operationType: OperationType?) = when (operationType) {
+                OperationType.INCOME -> income()
+                OperationType.EXPENSE -> expense()
+                OperationType.TRANSFER -> transfer()
+                null -> none()
+            }
         }
-
     }
-}
 
-enum class State {
-    NONE,
-    INIT,
-    CREATE,
-    INFO
-}
+    enum class State {
+        NONE,
+        INIT,
+        CREATE,
+        INFO
+    }
 
-enum class ConverterState {
-    NONE,
-    WITHOUT_CONVERTER,
-    WITH_CONVERTER,
-}
+    enum class ConverterState {
+        NONE,
+        WITHOUT_CONVERTER,
+        WITH_CONVERTER,
+    }
 }
