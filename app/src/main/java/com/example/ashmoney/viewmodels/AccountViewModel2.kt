@@ -58,28 +58,36 @@ interface AccountViewModel2 {
 
         private var currentAccountId: Int? = null
         private var accountEntity: AccountWithAllRelations? = null
-        private var state: MutableStateFlow<State> = MutableStateFlow(State.NONE)
-
-        private val uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.none())
-
-        //private val state: MutableStateFlow<State> = MutableStateFlow(State.NONE)
-        private val name: MutableStateFlow<String> = MutableStateFlow("")
-        private val iconList: StateFlow<List<IconUIModel>> =
-            iconDao.getAllFlow().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-        private val icon: MutableStateFlow<IconUIModel?> = MutableStateFlow(null)
-        private val iconColorList: StateFlow<List<IconColorUIModel>> = iconColoDao.getAllFlow()
-            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-        private val iconColor: MutableStateFlow<IconColorUIModel?> = MutableStateFlow(null)
-        private val currencyList: StateFlow<List<CurrencyUIModel>> = currencyDao.getAllFlow()
-            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-        private val currency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
-        private val sum: MutableStateFlow<Double> = MutableStateFlow(0.0)
-        private val note: MutableStateFlow<String> = MutableStateFlow("")
-        private val leavePage: MutableSharedFlow<Unit> = MutableSharedFlow()
-
+        private var state = MutableStateFlow(State.NONE)
+        private val uiState = MutableStateFlow<UIState>(UIState.none())
+        private val name = MutableStateFlow("")
+        private val icon = MutableStateFlow<IconUIModel?>(null)
+        private val iconList = MutableStateFlow<List<IconUIModel>>(emptyList())
+        private val iconColor = MutableStateFlow<IconColorUIModel?>(null)
+        private val iconColorList = MutableStateFlow<List<IconColorUIModel>>(emptyList())
+        private val currency = MutableStateFlow<CurrencyUIModel?>(null)
+        private val currencyList = MutableStateFlow<List<CurrencyUIModel>>(emptyList())
+        private val sum = MutableStateFlow(0.0)
+        private val note = MutableStateFlow("")
+        private val leavePage = MutableSharedFlow<Unit>()
 
         init {
+
+
             viewModelScope.launch {
+
+                launch {
+                    iconDao.getAllFlow().collect { iconList.value = it }
+                }
+
+                launch {
+                    iconColoDao.getAllFlow().collect { iconColorList.value = it }
+                }
+
+                launch {
+                    currencyDao.getAllFlow().collect { currencyList.value = it }
+                }
+
                 state.collect {
                     when (it) {
                         State.NONE, State.INIT, State.CREATE -> {

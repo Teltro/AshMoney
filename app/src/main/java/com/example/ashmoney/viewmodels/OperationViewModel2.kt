@@ -1,22 +1,16 @@
 package com.example.ashmoney.viewmodels
 
-import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewModelScope
 import com.example.ashmoney.core.MainApp
 import com.example.ashmoney.data.account.AccountWithAllRelations
-import com.example.ashmoney.data.operation.OperationEntity
 import com.example.ashmoney.data.operation.OperationWithAllRelations
-import com.example.ashmoney.data.operationCategory.OperationCategoryWithAllRelations
-import com.example.ashmoney.data.operationType.OperationTypeEntity
 import com.example.ashmoney.models.ui.AccountUIModel
 import com.example.ashmoney.models.ui.CurrencyUIModel
 import com.example.ashmoney.models.ui.OperationCategoryUIModel
 import com.example.ashmoney.models.ui.OperationTypeUIModel
 import com.example.ashmoney.utils.OperationType
-import com.example.ashmoney.utils.toIsoString
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.util.*
 
 interface OperationViewModel2 {
 
@@ -67,18 +61,30 @@ interface OperationViewModel2 {
         private val operationCategoryDao = db.operationCategoryDao()
         private val accountDao = db.accountDao()
         private val currencyDao = db.activeCurrencyDao()
+        private val currencyExchangeRateDao = db.currencyExchangeRateDao()
 
         private var state: MutableStateFlow<State> = MutableStateFlow(State.NONE)
         private var currentOperationId: Int? = null
         private var operationEntity: OperationWithAllRelations? = null
 
         private val uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.none())
+        private val operationType: MutableStateFlow<OperationTypeUIModel?> = MutableStateFlow(null)
+        private val fromAccount: MutableStateFlow<AccountUIModel?> = MutableStateFlow(null)
+        private val toAccount: MutableStateFlow<AccountUIModel?> = MutableStateFlow(null)
+        private val operationCategory: MutableStateFlow<OperationCategoryUIModel?> = MutableStateFlow(null)
+        private val currency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
+        private val converterUIState = MutableStateFlow(ConverterState.NONE)
+        private val converterFromCurrency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
+        private val converterToCurrency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
+        private val currencyExchangeRate: MutableStateFlow<Double> = MutableStateFlow(1.0)
+        private val sum: MutableStateFlow<Double> = MutableStateFlow(0.0)
+        private val name: MutableStateFlow<String> = MutableStateFlow("")
+        private val note: MutableStateFlow<String> = MutableStateFlow("")
+        private val converterState: MutableStateFlow<ConverterState> = MutableStateFlow(ConverterState.NONE)
 
         private val operationTypeList: StateFlow<List<OperationTypeUIModel>> =
             operationTypeDao.getAllFlow()
                 .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
-        private val operationType: MutableStateFlow<OperationTypeUIModel?> = MutableStateFlow(null)
 
         private val membersUIState: StateFlow<MembersUIState> = operationType.map { it ->
             val operationType = it?.let { OperationType.fromId(it.id) }
@@ -88,16 +94,12 @@ interface OperationViewModel2 {
         private val accountList: StateFlow<List<AccountUIModel>> =
             accountDao.getAllWithAllRelationsFlow()
                 .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-        private val fromAccount: MutableStateFlow<AccountUIModel?> = MutableStateFlow(null)
-        private val toAccount: MutableStateFlow<AccountUIModel?> = MutableStateFlow(null)
+
         private val operationCategoryList: StateFlow<List<OperationCategoryUIModel>> =
             operationCategoryDao.getAllWithAllRelationsFlow()
                 .combine(operationType) { operationCategoryList, selectedOperationType ->
                     operationCategoryList.filter { it.operationCategory.operationTypeId == selectedOperationType?.id }
                 }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
-        private val operationCategory: MutableStateFlow<OperationCategoryUIModel?> =
-            MutableStateFlow(null)
 
         // TODO find the way to enable collect for selected accounts only for transfer operation type
         private val currencyList: StateFlow<List<CurrencyUIModel>> = combine(
@@ -123,36 +125,117 @@ interface OperationViewModel2 {
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-        private val currency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
-        private val converterFromCurrency: MutableStateFlow<CurrencyUIModel?> =
-            MutableStateFlow(null)
-        private val converterToCurrency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
-        private val exchangeRate: MutableStateFlow<Double> = MutableStateFlow(1.0)
-        private val sum: MutableStateFlow<Double> = MutableStateFlow(0.0)
-        private val name: MutableStateFlow<String> = MutableStateFlow("")
-        private val note: MutableStateFlow<String> = MutableStateFlow("")
-        private val converterState: MutableStateFlow<ConverterState> =
-            MutableStateFlow(ConverterState.NONE)
-
-
         init {
             viewModelScope.launch {
-                state.collect {
-                    when (it) {
-                        State.NONE, State.INIT, State.CREATE -> {
-                            cleanOperationData()
+                launch {
+                    state.collect {
+                        when (it) {
+                            State.NONE, State.INIT, State.CREATE -> {
+                                cleanOperationData()
+                            }
+
+                            State.INFO -> {
+                                val result = loadOperationData();
+                                if (!result)
+                                    state.value = State.NONE
+                            }
+
+                            else -> {}
                         }
 
-                        State.INFO -> {
-                            val result = loadOperationData();
-                            if (!result)
-                                state.value = State.NONE
-                        }
-
-                        else -> {}
+                        uiState.value = UIState.fromState(it)
                     }
+                }
 
-                    uiState.value = UIState.fromState(it)
+                launch {
+                    combine(
+                        operationType,
+                        fromAccount,
+                        toAccount,
+                        currencyList, // ??
+                        currency
+                    ) { operationType, fromAccount, toAccount, currencyList, currency ->
+
+                        var _converterState: ConverterState = ConverterState.WITHOUT_CONVERTER
+                        var _currencyExchangeRate: Double? = null
+
+
+                        // cases with converter
+                        if (operationType != null && currencyList.isNotEmpty()) {
+                            val operationTypeEnum = OperationType.fromId(operationType.id)
+                            if (operationTypeEnum != null) {
+                                if (currencyList.size > 1) {
+                                    when (operationTypeEnum) {
+                                        OperationType.INCOME -> {
+                                            if (toAccount != null && currency != null) {
+                                                val accountCurrencyId =
+                                                    (toAccount as AccountWithAllRelations).activeCurrency.id
+                                                if (currency.id != accountCurrencyId) {
+                                                    //converterState = ConverterState.CHANGE_TARGET_CURRENCY
+                                                    _converterState = ConverterState.WITH_CONVERTER
+                                                    _currencyExchangeRate = currencyExchangeRateDao
+                                                        .getCurrencyExchangeRateValueByCurrencyId(
+                                                            currency.id,
+                                                            accountCurrencyId
+                                                        )
+                                                }
+                                            }
+                                        }
+
+                                        OperationType.EXPENSE -> {
+                                            if (fromAccount != null && currency != null) {
+                                                val accountCurrencyId =
+                                                    (fromAccount as AccountWithAllRelations).activeCurrency.id
+                                                if (currency.id != accountCurrencyId) {
+                                                    _converterState = ConverterState.WITH_CONVERTER
+                                                    _currencyExchangeRate = currencyExchangeRateDao
+                                                        .getCurrencyExchangeRateValueByCurrencyId(
+                                                            accountCurrencyId,
+                                                            currency.id
+                                                        )
+                                                }
+                                            }
+                                        }
+
+                                        OperationType.TRANSFER -> {
+                                            if (fromAccount != null && toAccount != null && currency != null) {
+                                                val accountFromCurrencyId =
+                                                    (fromAccount as AccountWithAllRelations).activeCurrency.id
+                                                val accountToCurrencyId =
+                                                    (toAccount as AccountWithAllRelations).activeCurrency.id
+
+                                                if (currency.id == accountFromCurrencyId) {
+                                                    //converterState = ConverterState.TRANSFER_FROM_CURRENCY
+                                                    _converterState =
+                                                        ConverterState.WITH_CONVERTER
+                                                    _currencyExchangeRate =
+                                                        db.currencyExchangeRateDao()
+                                                            .getCurrencyExchangeRateValueByCurrencyId(
+                                                                accountToCurrencyId,
+                                                                accountFromCurrencyId
+                                                            )
+                                                } else if (currency.id == accountToCurrencyId) {
+                                                    //converterState = ConverterState.TRANSFER_TO_CURRENCY
+                                                    _converterState =
+                                                        ConverterState.WITH_CONVERTER
+                                                    _currencyExchangeRate =
+                                                        db.currencyExchangeRateDao()
+                                                            .getCurrencyExchangeRateValueByCurrencyId(
+                                                                accountFromCurrencyId,
+                                                                accountToCurrencyId
+                                                            )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        converterUIState.value = _converterState
+                        currencyExchangeRate.value = _currencyExchangeRate ?: 1.0
+
+                    }.collect()
                 }
             }
         }
@@ -180,7 +263,7 @@ interface OperationViewModel2 {
             operationCategory.value = null
             currency.value = null
             name.value = ""
-            exchangeRate.value = 1.0
+            currencyExchangeRate.value = 1.0
             sum.value = 0.0
             note.value = ""
         }
