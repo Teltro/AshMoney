@@ -8,12 +8,12 @@ import android.view.View
 import android.widget.ImageView
 import com.example.ashmoney.R
 import com.example.ashmoney.databinding.RecyclerviewOperationItem2Binding
-import com.example.ashmoney.models.ui.OperationListUIModel2
-import com.example.ashmoney.utils.OperationType
+import com.example.ashmoney.models.ui.OperationListUIModel
+import com.example.ashmoney.utils.OperationTypeId
 import com.example.ashmoney.utils.dpToPx
 import com.example.ashmoney.utils.getDrawable
 
-class OperationListHolder(val itemView: View) : ClickedListHolder<OperationListUIModel2>(itemView) {
+class OperationListHolder(val itemView: View) : ClickedListHolder<OperationListUIModel>(itemView) {
 
     companion object {
         private val circleStrokeWidth by lazy {
@@ -21,18 +21,18 @@ class OperationListHolder(val itemView: View) : ClickedListHolder<OperationListU
         }
     }
 
-    override lateinit var item: OperationListUIModel2
+    override lateinit var item: OperationListUIModel
         private set
 
     private val binding = RecyclerviewOperationItem2Binding.bind(itemView)
 
-    override fun bind(item: OperationListUIModel2, onClick: (() -> Unit)?) {
+    override fun bind(item: OperationListUIModel, onClick: (() -> Unit)?) {
         this.item = item
 
-        val operationType = OperationType.fromId(item.operationTypeId)
+        val operationTypeId = OperationTypeId.fromId(item.operationTypeId)
 
         with(binding) {
-            operationType?.let {
+            operationTypeId?.let {
                 root.setBackgroundResource(getBackgroundColorIdByOperationId(it))
             }
             recyclerViewOperationItemFromImageView.fillImageViewWithIcon(item.fromIconResourceName, item.fromIconColorValue)
@@ -48,11 +48,11 @@ class OperationListHolder(val itemView: View) : ClickedListHolder<OperationListU
         }
     }
 
-    private fun getBackgroundColorIdByOperationId(operationType: OperationType): Int {
-        return when (operationType) {
-            OperationType.INCOME -> R.color.incomeBackgroundColor
-            OperationType.EXPENSE -> R.color.expenseBackgroundColor
-            OperationType.TRANSFER -> R.color.transferBackgroundColor
+    private fun getBackgroundColorIdByOperationId(operationTypeId: OperationTypeId): Int {
+        return when (operationTypeId) {
+            OperationTypeId.INCOME -> R.color.incomeBackgroundColor
+            OperationTypeId.EXPENSE -> R.color.expenseBackgroundColor
+            OperationTypeId.TRANSFER -> R.color.transferBackgroundColor
         }
     }
 

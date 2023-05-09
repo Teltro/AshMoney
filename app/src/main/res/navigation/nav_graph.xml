@@ -2,7 +2,7 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:app="http://schemas.android.com/apk/res-auto"
             xmlns:tools="http://schemas.android.com/tools" android:id="@+id/nav_graph"
-            app:startDestination="@id/accountListFragmentDestination">
+            app:startDestination="@id/dashboardFragment">
 
     <fragment
         android:id="@+id/accountListFragmentDestination"
@@ -12,16 +12,10 @@
         <action
             android:id="@+id/action_accountsFragment_to_createAccountFragment"
             app:destination="@id/accountFragmentDestination" />
-        <action
-            android:id="@+id/action_accountListFragmentDestination_to_operationListFragment2"
-            app:destination="@id/operationListFragmentDestination" />
-        <action
-            android:id="@+id/action_accountListFragmentDestination_to_currencyExchangeRateFragment"
-            app:destination="@id/currencyExchangeRateFragment" />
     </fragment>
     <fragment
         android:id="@+id/accountFragmentDestination"
-        android:name="com.example.ashmoney.fragments.AccountFragment2"
+        android:name="com.example.ashmoney.fragments.AccountFragment"
         android:label="CreateAccountFragment" />
     <fragment
         android:id="@+id/operationListFragmentDestination"
@@ -41,4 +35,19 @@
         android:name="com.example.ashmoney.fragments.CurrencyExchangeRateFragment"
         android:label="fragment_currency_exchange_rate"
         tools:layout="@layout/fragment_currency_exchange_rate" />
+    <fragment
+        android:id="@+id/dashboardFragment"
+        android:name="com.example.ashmoney.fragments.DashboardFragment"
+        android:label="fragment_dashboard"
+        tools:layout="@layout/fragment_dashboard" >
+        <action
+            android:id="@+id/action_dashboardFragment_to_currencyExchangeRateFragment"
+            app:destination="@id/currencyExchangeRateFragment" />
+        <action
+            android:id="@+id/action_dashboardFragment_to_accountListFragmentDestination"
+            app:destination="@id/accountListFragmentDestination" />
+        <action
+            android:id="@+id/action_dashboardFragment_to_operationListFragmentDestination"
+            app:destination="@id/operationListFragmentDestination" />
+    </fragment>
 </navigation>

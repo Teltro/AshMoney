@@ -2,7 +2,7 @@ package com.example.ashmoney.data.operation
 
 import androidx.room.ColumnInfo
 import androidx.room.DatabaseView
-import com.example.ashmoney.models.ui.OperationListUIModel2
+import com.example.ashmoney.models.ui.OperationListUIModel
 
 @DatabaseView(
     """
@@ -108,4 +108,4 @@ data class OperationView(
     override val sum: Double,
     @ColumnInfo(name = "currency_name")
     override val currencyName: String
-): OperationListUIModel2
+): OperationListUIModel

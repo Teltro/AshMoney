@@ -1,12 +1,12 @@
 package com.example.ashmoney.fragments
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -20,7 +20,7 @@ import com.example.ashmoney.adapters.OperationCategoryRadioAdapter
 import com.example.ashmoney.adapters.OperationTypeRadioAdapter
 import com.example.ashmoney.databinding.FragmentOperationBinding
 import com.example.ashmoney.itemDecorations.RadioItemDecoration
-import com.example.ashmoney.utils.*
+import com.example.ashmoney.utils.setEnabledForAll
 import com.example.ashmoney.viewmodels.OperationViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -31,7 +31,7 @@ class OperationFragment : Fragment() {
         const val OPERATION_ID_KEY = "operationId"
     }
 
-    private val viewModel: OperationViewModel by viewModels()
+    private val viewModel: OperationViewModel.ViewModel by viewModels()
 
     private lateinit var navController: NavController
     private lateinit var binding: FragmentOperationBinding
@@ -63,59 +63,25 @@ class OperationFragment : Fragment() {
         setupAccountToList()
         setupOperationCategoryList()
         setupCurrencyList()
+        setupNameField()
+        setupSumField()
+        setupNoteField()
+        setupConverterCurrenciesFields()
+        setupCurrencyExchangeRateField()
+        setupConverteredSumField()
 
-        bindSelectedOperationTypeForSave()
-
-        setupFieldListeners()
-
-        startStateManaging()
-        startOperationTypeStateManaging()
-
-        createTextListenersForConverterFields()
+        setupButtons()
+        setupLeavePage()
         setupConvertLayoutEnable()
-        startConverterStateManaging()
-    }
 
-    private fun bindSelectedOperationTypeForSave() {
-        lifecycleScope.launch {
-            launch {
-                viewModel.selectedOperationType.collect { viewModel.data.operationType = it }
-            }
-            launch {
-                viewModel.selectedFromAccount.collect {
-                    viewModel.data.accountFrom = it
-                    //currencyAdapter.selectedItem = null
-                    binding.fragmentOperationOperationConvertFromCurrencyTextView.text =
-                        it?.activeCurrencyName
-                    binding.fragmentOperationOperationSumFromCurrencyTextView.text =
-                        it?.activeCurrencyName
-                }
-            }
-            launch {
-                viewModel.selectedToAccount.collect { viewModel.data.accountTo = it }
-            }
-            launch {
-                viewModel.selectedCurrency.collect {
-                    viewModel.data.currency = it
-
-                    binding.fragmentOperationOperationConvertToCurrencyTextView.text =
-                        it?.name
-                    binding.fragmentOperationOperationSumToCurrencyTextView.text =
-                        it?.name
-                }
-            }
-            launch {
-                viewModel.currencyList.collect {
-                    if (!it.contains(viewModel.selectedCurrency.value))
-                        viewModel.selectedCurrency.value = null
-                }
-            }
-        }
+        startUiStateManaging()
+        startMemberUIStateManaging()
+        startConverterUIStateManaging()
     }
 
     private fun setupOperationTypeList() {
         operationTypeAdapter = OperationTypeRadioAdapter {
-            viewModel.selectedOperationType.value = it
+            viewModel.inputs.operationType(it)
         }
         setupDefaultHorizontalList(
             binding.fragmentOperationOperationTypeRecyclerView,
@@ -123,6 +89,15 @@ class OperationFragment : Fragment() {
         )
 
         lifecycleScope.launch {
+            launch {
+                viewModel.outputs.operationTypeList().collect(operationTypeAdapter::submitList)
+            }
+            launch {
+                viewModel.outputs.operationType().collect { operationTypeAdapter.selectedItem = it }
+            }
+        }
+
+        /*lifecycleScope.launch {
             viewModel.operationTypeList.collect { operationTypeList ->
                 if (viewModel.state.value == OperationViewModel.State.CREATE) {
                     val operationSelectedType = viewModel.selectedOperationType.value
@@ -135,13 +110,13 @@ class OperationFragment : Fragment() {
                 }
                 operationTypeAdapter.submitList(operationTypeList)
             }
-        }
+        }*/
     }
 
     private fun setupAccountFromList() {
         accountFromAdapter = AccountRadioAdapter {
             //viewModel.data.accountFrom = it
-            viewModel.selectedFromAccount.value = it
+            viewModel.inputs.fromAccount(it)
         }
         setupDefaultHorizontalList(
             binding.fragmentOperationFromAccountRecyclerView,
@@ -149,27 +124,35 @@ class OperationFragment : Fragment() {
         )
 
         lifecycleScope.launch {
-            viewModel.accountList.collect(accountFromAdapter::submitList)
+            launch {
+                viewModel.outputs.accountList().collect(accountFromAdapter::submitList)
+            }
+            launch {
+                viewModel.outputs.fromAccount().collect { accountFromAdapter.selectedItem = it }
+            }
         }
-
     }
 
     private fun setupAccountToList() {
         accountToAdapter = AccountRadioAdapter {
-            //viewModel.data.accountTo = it
-            viewModel.selectedToAccount.value = it
+            viewModel.inputs.toAccount(it)
         }
         setupDefaultHorizontalList(binding.fragmentOperationToAccountRecyclerView, accountToAdapter)
 
         lifecycleScope.launch {
-            viewModel.accountList.collect(accountToAdapter::submitList)
+            launch {
+                viewModel.outputs.accountList().collect(accountToAdapter::submitList)
+            }
+            launch {
+                viewModel.outputs.toAccount().collect { accountToAdapter.selectedItem = it }
+            }
         }
     }
 
     private fun setupOperationCategoryList() {
         operationCategoryAdapter =
             OperationCategoryRadioAdapter {
-                viewModel.data.operationCategory = it
+                viewModel.inputs.operationCategory(it)
             }
         setupDefaultHorizontalList(
             binding.fragmentOperationOperationCategoryRecyclerView,
@@ -177,13 +160,20 @@ class OperationFragment : Fragment() {
         )
 
         lifecycleScope.launch {
-            viewModel.operationCategoryList.collect(operationCategoryAdapter::submitList)
+            launch {
+                viewModel.outputs.operationCategoryList()
+                    .collect(operationCategoryAdapter::submitList)
+            }
+            launch {
+                viewModel.outputs.operationCategory()
+                    .collect { operationCategoryAdapter.selectedItem = it }
+            }
         }
     }
 
     private fun setupCurrencyList() {
         currencyAdapter = CurrencyRadioAdapter {
-            viewModel.selectedCurrency.value = it
+            viewModel.inputs.currency(it)
         }
 
         setupDefaultHorizontalList(
@@ -192,7 +182,12 @@ class OperationFragment : Fragment() {
         )
 
         lifecycleScope.launch {
-            viewModel.currencyList.collect(currencyAdapter::submitList)
+            launch {
+                viewModel.outputs.currencyList().collect(currencyAdapter::submitList)
+            }
+            launch {
+                viewModel.outputs.currency().collect { currencyAdapter.selectedItem = it }
+            }
         }
     }
 
@@ -216,318 +211,154 @@ class OperationFragment : Fragment() {
         }
     }
 
-    private fun setupFieldListeners() {
-        binding.fragmentOperationOperationNameEditText.doAfterTextChanged {
-            viewModel.data.name = it.toString()
+    private fun setupNameField() {
+        with(binding) {
+            lifecycleScope.launch {
+                viewModel.outputs.name().collect {
+                    if (!fragmentOperationOperationNameEditText.hasFocus())
+                        fragmentOperationOperationNameEditText.setText(it)
+                }
+            }
+            fragmentOperationOperationNameEditText.doAfterTextChanged {
+                viewModel.inputs.name(it.toString())
+            }
         }
+    }
 
-        /*binding.fragmentOperationOperationSumEditText.doAfterTextChanged {
-            viewModel.data.run {
-                if (it != null && it.isNotEmpty())
-                    amountValue = it.toString().toDouble()
+    private fun setupSumField() {
+        with(binding) {
+            lifecycleScope.launch {
+                viewModel.outputs.sum()
+                    .collect {
+                        if (!fragmentOperationSumFromValueEditText.hasFocus())
+                            fragmentOperationSumFromValueEditText.setText(it.toString())
+                    }
+            }
+            fragmentOperationSumFromValueEditText.doAfterTextChanged {
+                val inputValue = if (it != null && it.isNotEmpty())
+                    it.toString().toDouble()
                 else
-                    amountValue = 0.0
+                    0.0
+                viewModel.inputs.sum(inputValue)
             }
-
-        }*/
-
-        binding.fragmentOperationOperationNoteEditText.doAfterTextChanged {
-            viewModel.data.note = it.toString()
         }
     }
 
-    private fun startOperationTypeStateManaging() {
-        lifecycleScope.launch {
-            viewModel.selectedOperationType.collect { operationType ->
-                operationType?.let {
-                    when (operationType.id) {
-                        OperationType.INCOME.id -> handleOperationTypeIncomeState()
-                        OperationType.EXPENSE.id -> handleOperationTypeExpenseState()
-                        OperationType.TRANSFER.id -> handleOperationTypeTransferState()
+    private fun setupNoteField() {
+        with(binding) {
+            lifecycleScope.launch {
+                viewModel.outputs.note()
+                    .collect {
+                        if (!fragmentOperationOperationNoteEditText.hasFocus())
+                            fragmentOperationOperationNoteEditText.setText(it)
                     }
+            }
+            fragmentOperationOperationNoteEditText.doAfterTextChanged {
+                viewModel.inputs.note(it.toString())
+            }
+        }
+    }
 
-                    if (viewModel.state.value == OperationViewModel.State.CREATE) {
-                        accountFromAdapter.selectedItem = null
-                        accountToAdapter.selectedItem = null
-                        operationCategoryAdapter.selectedItem = null
-                        currencyAdapter.selectedItem = null
+    private fun setupConverterCurrenciesFields() {
+        with(binding) {
+            lifecycleScope.launch {
+                launch {
+                    viewModel.outputs.converterFromCurrency().collect {
+                        fragmentOperationOperationConvertFromCurrencyTextView.text = it
+                        fragmentOperationOperationSumFromCurrencyTextView.text = it
                     }
-                } ?: handleOperationTypeNoneState()
+                }
+
+                launch {
+                    viewModel.outputs.converterToCurrency().collect {
+                        fragmentOperationOperationConvertToCurrencyTextView.text = it
+                        fragmentOperationOperationSumToCurrencyTextView.text = it
+                    }
+                }
             }
         }
     }
 
-    private fun handleOperationTypeNoneState() {
-        binding.fragmentOperationFromAccountLayout.visibility = View.GONE
-        binding.fragmentOperationToAccountLayout.visibility = View.GONE
-        binding.fragmentOperationOperationCategoryLayout.visibility = View.GONE
+    private fun setupCurrencyExchangeRateField() {
+        with(binding) {
+            lifecycleScope.launch {
+                launch {
+                    viewModel.outputs.currencyExchangeRate()
+                        .collect {
+                            if (!fragmentOperationConverterToValueEditText.hasFocus())
+                                fragmentOperationConverterToValueEditText.setText(roundDouble(it).toString())
+                        }
+                }
+            }
+            fragmentOperationConverterToValueEditText.doAfterTextChanged {
+                viewModel.inputs.currencyExchangeRate(it.toString().toDouble())
+            }
+        }
     }
 
-    private fun handleOperationTypeIncomeState() {
-        binding.fragmentOperationFromAccountLayout.visibility = View.GONE
-        binding.fragmentOperationToAccountLayout.visibility = View.VISIBLE
-        binding.fragmentOperationOperationCategoryLayout.visibility = View.VISIBLE
-    }
-
-    private fun handleOperationTypeExpenseState() {
-        binding.fragmentOperationFromAccountLayout.visibility = View.VISIBLE
-        binding.fragmentOperationToAccountLayout.visibility = View.GONE
-        binding.fragmentOperationOperationCategoryLayout.visibility = View.VISIBLE
-    }
-
-    private fun handleOperationTypeTransferState() {
-        binding.fragmentOperationFromAccountLayout.visibility = View.VISIBLE
-        binding.fragmentOperationToAccountLayout.visibility = View.VISIBLE
-        binding.fragmentOperationOperationCategoryLayout.visibility = View.GONE
-    }
-
-    private fun startStateManaging() {
+    private fun setupConverteredSumField() {
         lifecycleScope.launch {
-            viewModel.state.collect { state ->
-                setVisualDataFromViewModel()
-
-                when (state) {
-                    OperationViewModel.State.NONE, OperationViewModel.State.INIT -> handleNoneState()
-                    OperationViewModel.State.INFO -> handleInfoState()
-                    OperationViewModel.State.CREATE -> handleCreateState()
+            viewModel.outputs.converteredSum().collect {
+                binding.fragmentOperationSumToValueEditText.run {
+                    if (!hasFocus())
+                        setText(roundDouble(it).toString())
                 }
             }
         }
     }
 
-    private fun setVisualDataFromViewModel() {
-        viewModel.data.let { data ->
-            with(binding) {
-                operationTypeAdapter.selectedItem = data.operationType
-                accountFromAdapter.selectedItem = data.accountFrom
-                accountToAdapter.selectedItem = data.accountTo
-                operationCategoryAdapter.selectedItem = data.operationCategory
-                currencyAdapter.selectedItem = data.currency
-
-                /*data.amountValue?.let {
-                    fragmentOperationOperationSumEditText.text = it.toString().toEditable()
-                } ?: run { fragmentOperationOperationSumEditText.text = "".toEditable() }*/
-                data.name?.let {
-                    fragmentOperationOperationNameEditText.text = it.toEditable()
+    private fun setupButtons() {
+        with(binding) {
+            lifecycleScope.launch {
+                launch {
+                    fragmentOperationPrimaryActionButton.setOnClickListener {
+                        viewModel.inputs.primaryActionClicked()
+                    }
                 }
-                data.note?.let {
-                    fragmentOperationOperationNoteEditText.text = it.toEditable()
-                } ?: run { fragmentOperationOperationNoteEditText.text = "".toEditable() }
-                data.dateTime?.let {
-                    fragmentOperationOperationDateTimeEditText.text = it.fromIsoToDate()?.toDefaultString()?.toEditable()
+                launch {
+                    fragmentOperationSecondaryActionButton.setOnClickListener {
+                        viewModel.inputs.secondaryActionClicked()
+                    }
                 }
             }
         }
     }
 
-    private fun handleNoneState() {
-        binding.run {
-            /*fragmentOperationFromAccountLayout.setEnabledForAll(false)
-            fragmentOperationToAccountLayout.setEnabledForAll(false)
-            fragmentOperationOperationCategoryLayout.setEnabledForAll(false)
-            fragmentOperationOperationNameLayout.setEnabledForAll(false)
-            fragmentOperationOperationSumLayout.setEnabledForAll(false)
-            fragmentOperationOperationNoteLayout.setEnabledForAll(false)*/
-
-            fragmentOperationOperationDateTimeLayout.setEnabledForAll(false)
-            fragmentOperationOperationDateTimeLayout.visibility = View.GONE
-
-            fragmentOperationPrimaryActionButton.text = ""
-            fragmentOperationSecondaryActionButton.text = ""
-            fragmentOperationPrimaryActionButton.setOnClickListener(null)
-            fragmentOperationSecondaryActionButton.setOnClickListener(null)
-        }
-    }
-
-    private fun handleInfoState() {
-        binding.run {
-            /*fragmentOperationFromAccountLayout.setEnabledForAll(false)
-            fragmentOperationToAccountLayout.setEnabledForAll(false)
-            fragmentOperationOperationCategoryLayout.setEnabledForAll(false)
-            fragmentOperationOperationNameLayout.setEnabledForAll(false)
-            fragmentOperationOperationSumLayout.setEnabledForAll(false)
-            fragmentOperationOperationNoteLayout.setEnabledForAll(false)*/
-
-            fragmentOperationOperationDateTimeLayout.setEnabledForAll(false)
-            fragmentOperationOperationDateTimeLayout.visibility = View.VISIBLE
-
-            fragmentOperationPrimaryActionButton.text = "Удалить"
-            fragmentOperationSecondaryActionButton.text = "Назад"
-            fragmentOperationPrimaryActionButton.setOnClickListener {
-                viewModel.data.operationId?.let {
-                    // TODO add confirm window
-                    viewModel.deleteOperation(it)
-                    navController.popBackStack()
-                }
-            }
-            fragmentOperationSecondaryActionButton.setOnClickListener {
+    private fun setupLeavePage() {
+        lifecycleScope.launch {
+            viewModel.outputs.leavePage().collect {
                 navController.popBackStack()
             }
         }
     }
 
-    private fun handleCreateState() {
-        binding.run {
-            /*fragmentOperationFromAccountLayout.setEnabledForAll(true)
-            fragmentOperationToAccountLayout.setEnabledForAll(true)
-            fragmentOperationOperationCategoryLayout.setEnabledForAll(true)
-            fragmentOperationOperationNameLayout.setEnabledForAll(true)
-            fragmentOperationOperationSumLayout.setEnabledForAll(true)
-            fragmentOperationOperationNoteLayout.setEnabledForAll(true)*/
-
-            fragmentOperationOperationDateTimeLayout.setEnabledForAll(false)
-            fragmentOperationOperationDateTimeLayout.visibility = View.GONE
-
-            fragmentOperationPrimaryActionButton.text = "Создать"
-            fragmentOperationSecondaryActionButton.text = "Отменить"
-            fragmentOperationPrimaryActionButton.setOnClickListener {
-                // TODO check fields?
-                viewModel.getOperationFromCurrentData()?.let {
-                    viewModel.insertOperation(it)
-                    navController.popBackStack()
-                } ?: throw IllegalStateException() // TODO handle error(mb toast?)
-            }
-            fragmentOperationSecondaryActionButton.setOnClickListener {
-                navController.popBackStack()
-            }
-        }
-    }
-
-    private fun createTextListenersForConverterFields() {
-        with(binding) {
-            fragmentOperationSumFromValueEditText.doAfterTextChanged {
-                if (viewModel.converterState.value == OperationViewModel.ConverterState.WITHOUT_CONVERTER) {
-                    viewModel.data.amountValue = it.toString().toDoubleOrNull()
-                } else if (viewModel.converterState.value == OperationViewModel.ConverterState.WITH_CONVERTER) {
-                    val inputValue = it.toString().toDoubleOrNull()
-                    val coeff =
-                        fragmentOperationConverterToValueEditText.text.toString().toDoubleOrNull()
-                    val resultValue = if (inputValue != null && coeff != null)
-                        inputValue * coeff
-                    else
-                        0.0
-
-                    fragmentOperationSumToValueEditText.text = resultValue.toString().toEditable()
-
-                    viewModel.data.amountValue = resultValue
-                }
-            }
-            fragmentOperationConverterToValueEditText.doAfterTextChanged {
-                if (viewModel.converterState.value == OperationViewModel.ConverterState.WITH_CONVERTER) {
-                    val inputValue =
-                        fragmentOperationSumFromValueEditText.text.toString().toDoubleOrNull()
-                    val coeff = it.toString().toDoubleOrNull()
-                    val resultValue = if (inputValue != null && coeff != null)
-                        inputValue * coeff
-                    else
-                        0.0
-
-                    fragmentOperationSumToValueEditText.text = resultValue.toString().toEditable()
-
-                    viewModel.data.currencyExchangeRate = inputValue
-                }
-            }
-        }
-    }
-
-    /*private fun createTextListenersForConverterFields() {
-        with(binding) {
-            fragmentOperationSumFromValueEditText.doAfterTextChanged {
-                if (
-                    viewModel.converterState.value == OperationViewModel.ConverterState.ONLY_ONE_CURRENCY ||
-                    viewModel.converterState.value == OperationViewModel.ConverterState.CHANGE_TARGET_CURRENCY
-                ) {
-                    viewModel.data.amountValue = it.toString().toDoubleOrNull()
-                }
-            }
-            fragmentOperationConverterToValueEditText.doAfterTextChanged {
-                if (viewModel.converterState.value == OperationViewModel.ConverterState.TRANSFER_FROM_CURRENCY) {
-                    val inputValue =
-                        fragmentOperationSumFromValueEditText.text.toString().toDoubleOrNull()
-                    val coeff = it.toString().toDoubleOrNull()
-                    val resultValue = if (inputValue != null && coeff != null)
-                        inputValue * coeff
-                    else
-                        0.0
-
-                    fragmentOperationSumToValueEditText.text = resultValue.toString().toEditable()
-
-                    viewModel.data.currencyExchangeRate = inputValue
-                }
-            }
-
-            fragmentOperationSumFromValueEditText.doAfterTextChanged {
-                if (viewModel.converterState.value == OperationViewModel.ConverterState.TRANSFER_FROM_CURRENCY) {
-                    val inputValue = it.toString().toDoubleOrNull()
-                    val coeff =
-                        fragmentOperationConverterToValueEditText.text.toString().toDoubleOrNull()
-                    val resultValue = if (inputValue != null && coeff != null)
-                        inputValue * coeff
-                    else
-                        0.0
-
-                    fragmentOperationSumToValueEditText.text = resultValue.toString().toEditable()
-
-                    viewModel.data.amountValue = resultValue
-                }
-            }
-
-            fragmentOperationConverterFromValueEditText.doAfterTextChanged {
-                if (
-                    viewModel.converterState.value == OperationViewModel.ConverterState.CHANGE_ANOTHER_CURRENCY ||
-                    viewModel.converterState.value == OperationViewModel.ConverterState.TRANSFER_TO_CURRENCY
-                ) {
-                    val inputValue =
-                        fragmentOperationSumToValueEditText.text.toString().toDoubleOrNull()
-                    val coeff = it.toString().toDoubleOrNull()
-                    val resultValue = if (inputValue != null && coeff != null)
-                        inputValue * coeff
-                    else
-                        0.0
-
-                    fragmentOperationSumFromValueEditText.text = resultValue.toString().toEditable()
-
-                    viewModel.data.currencyExchangeRate = inputValue// or reverse?
-                }
-            }
-
-            fragmentOperationSumToValueEditText.doAfterTextChanged {
-                if (
-                    viewModel.converterState.value == OperationViewModel.ConverterState.CHANGE_ANOTHER_CURRENCY ||
-                    viewModel.converterState.value == OperationViewModel.ConverterState.TRANSFER_TO_CURRENCY
-                ) {
-                    val inputValue = it.toString().toDoubleOrNull()
-                    val coeff =
-                        fragmentOperationConverterFromValueEditText.text.toString().toDoubleOrNull()
-                    val resultValue = if (inputValue != null && coeff != null)
-                        inputValue * coeff
-                    else
-                        0.0
-
-                    fragmentOperationSumFromValueEditText.text = resultValue.toString().toEditable()
-
-                    viewModel.data.amountValue = inputValue
-                }
-            }
-        }
-    }*/
-
-    /*private fun startConverterStateManaging() {
+    private fun startUiStateManaging() {
         lifecycleScope.launch {
-            viewModel.converterState.collect {
-                when (it) {
-                    OperationViewModel.ConverterState.NONE,
-                    OperationViewModel.ConverterState.ONLY_ONE_CURRENCY,
-                    OperationViewModel.ConverterState.CHANGE_TARGET_CURRENCY -> handleConverterDefaultState()
-
-                    OperationViewModel.ConverterState.CHANGE_ANOTHER_CURRENCY,
-                    OperationViewModel.ConverterState.TRANSFER_TO_CURRENCY -> handleConverterChangeAnotherCurrencyOrTransferToCurrencyState()
-
-                    OperationViewModel.ConverterState.TRANSFER_FROM_CURRENCY -> handleConverterTransferFromCurrencyState()
+            viewModel.outputs.uiState().collect {
+                with(binding) {
+                    fragmentOperationPrimaryActionButton.text = it.primaryActionButtonText
+                    fragmentOperationSecondaryActionButton.text = it.secondaryActionButtonText
                 }
             }
         }
-    }*/
+    }
+
+    private fun startMemberUIStateManaging() {
+        lifecycleScope.launch {
+            viewModel.outputs.membersUIState().collect {
+                with(binding) {
+                    fragmentOperationFromAccountLayout.visibility =
+                        memberUIVisibleConvert(it.fromAccountVisible)
+                    fragmentOperationToAccountLayout.visibility =
+                        memberUIVisibleConvert(it.toAccountVisible)
+                    fragmentOperationOperationCategoryLayout.visibility =
+                        memberUIVisibleConvert(it.operationCategoryVisible)
+                }
+            }
+        }
+    }
+
+    private fun memberUIVisibleConvert(visible: Boolean) = if (visible) View.VISIBLE else View.GONE
 
     private fun setupConvertLayoutEnable() {
         with(binding) {
@@ -538,102 +369,23 @@ class OperationFragment : Fragment() {
         }
     }
 
-
-    private fun startConverterStateManaging() {
+    private fun startConverterUIStateManaging() {
         lifecycleScope.launch {
-            viewModel.converterState.collect {
-                when (it) {
-                    OperationViewModel.ConverterState.NONE,
-                    OperationViewModel.ConverterState.WITHOUT_CONVERTER -> handleConverterWithoutState()
-                    OperationViewModel.ConverterState.WITH_CONVERTER -> handleConvertWithState()
+            viewModel.outputs.converterUIState().collect {
+                with(binding) {
+                    when (it) {
+                        OperationViewModel.ConverterState.NONE,
+                        OperationViewModel.ConverterState.WITHOUT_CONVERTER -> {
+                            fragmentOperationConverterLayout.visibility = View.GONE
+                            fragmentOperationSumToLayout.visibility = View.GONE
+                        }
+                        OperationViewModel.ConverterState.WITH_CONVERTER -> {
+                            fragmentOperationConverterLayout.visibility = View.VISIBLE
+                            fragmentOperationSumToLayout.visibility = View.VISIBLE
+                        }
+                    }
                 }
             }
-        }
-    }
-
-    private fun handleConverterWithoutState() {
-        with(binding) {
-            fragmentOperationConverterLayout.visibility = View.GONE
-            fragmentOperationSumToLayout.visibility = View.GONE
-
-            fragmentOperationSumFromValueEditText.text =
-                viewModel.data.amountValue.toString().toEditable()
-        }
-    }
-
-    private fun handleConvertWithState() {
-        with(binding) {
-            fragmentOperationConverterLayout.visibility = View.VISIBLE
-            fragmentOperationSumToLayout.visibility = View.VISIBLE
-
-            fragmentOperationConverterFromValueEditText.text =
-                "1.0".toEditable()
-            fragmentOperationConverterToValueEditText.text = viewModel.data.currencyExchangeRate.let {
-                if (it == null)
-                    "1.0".toEditable()
-                else
-                    roundDouble(it).toString().toEditable()
-            }
-            fragmentOperationSumFromValueEditText.text =
-                viewModel.data.amountValue.toString().toEditable()
-            fragmentOperationSumToValueEditText.text = "0.0".toEditable()
-        }
-    }
-
-    private fun handleConverterDefaultState() {
-        with(binding) {
-            fragmentOperationConverterLayout.visibility = View.GONE
-            fragmentOperationSumToLayout.visibility = View.GONE
-            fragmentOperationSumFromLayout.setEnabledForAll(true)
-
-            fragmentOperationSumFromValueEditText.text =
-                viewModel.data.amountValue.toString().toEditable()
-        }
-    }
-
-    private fun handleConverterChangeAnotherCurrencyOrTransferToCurrencyState() {
-        with(binding) {
-            fragmentOperationConverterLayout.visibility = View.VISIBLE
-            fragmentOperationSumToLayout.visibility = View.VISIBLE
-            fragmentOperationConverterFromLayout.setEnabledForAll(true)
-            fragmentOperationConverterToLayout.setEnabledForAll(false)
-            fragmentOperationSumFromLayout.setEnabledForAll(false)
-            fragmentOperationSumToLayout.setEnabledForAll(true)
-
-            fragmentOperationConverterFromValueEditText.text = viewModel.data.currencyExchangeRate.let {
-                if (it == null)
-                    "0.0".toEditable()
-                else
-                    roundDouble(it).toString().toEditable()
-            }
-            fragmentOperationConverterToValueEditText.text =
-                "1.0".toEditable()
-            fragmentOperationSumFromValueEditText.text = "0.0".toEditable()
-            fragmentOperationSumToValueEditText.text =
-                viewModel.data.amountValue.toString().toEditable()
-        }
-    }
-
-    private fun handleConverterTransferFromCurrencyState() {
-        with(binding) {
-            fragmentOperationConverterLayout.visibility = View.VISIBLE
-            fragmentOperationSumToLayout.visibility = View.VISIBLE
-            fragmentOperationConverterFromLayout.setEnabledForAll(true)
-            fragmentOperationConverterToLayout.setEnabledForAll(false)
-            fragmentOperationSumFromLayout.setEnabledForAll(false)
-            fragmentOperationSumToLayout.setEnabledForAll(true)
-
-            fragmentOperationConverterFromValueEditText.text =
-                "1.0".toEditable()
-            fragmentOperationConverterToValueEditText.text = viewModel.data.currencyExchangeRate.let {
-                if (it == null)
-                    "0.0".toEditable()
-                else
-                    roundDouble(it).toString().toEditable()
-            }
-            fragmentOperationSumFromValueEditText.text =
-                viewModel.data.amountValue.toString().toEditable()
-            fragmentOperationSumToValueEditText.text = "0.0".toEditable()
         }
     }
 
@@ -643,6 +395,5 @@ class OperationFragment : Fragment() {
         }
         return value
     }
-
 
 }

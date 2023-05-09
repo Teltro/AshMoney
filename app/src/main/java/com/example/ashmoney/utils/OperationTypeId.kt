@@ -1,6 +1,6 @@
 package com.example.ashmoney.utils
 
-enum class OperationType(val id: Int) {
+enum class OperationTypeId(val id: Int) {
     INCOME(1),
     EXPENSE(2),
     TRANSFER(3)

@@ -1,6 +1,5 @@
 package com.example.ashmoney.viewmodels
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ashmoney.core.MainApp
 import com.example.ashmoney.data.account.AccountEntity
@@ -14,140 +13,312 @@ import com.example.ashmoney.models.ui.IconUIModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class AccountViewModel : ViewModel() {
+interface AccountViewModel {
 
-    private val db
-        get() = MainApp.instance.db
+    interface Inputs {
+        fun name(name: String)
+        fun icon(icon: IconUIModel?)
+        fun iconColor(iconColor: IconColorUIModel?)
+        fun currency(currency: CurrencyUIModel?)
+        fun sum(sum: Double)
+        fun note(note: String)
 
-    val data: Data = Data()
+        fun primaryActionClick()
+        fun secondaryActionClick()
+    }
 
-    val state = MutableStateFlow(State.NONE)
+    interface Outputs {
+        fun uiState(): StateFlow<UIState>
 
-    val currencyList: StateFlow<List<CurrencyUIModel>> =
-        db.activeCurrencyDao().getAllFlow()
-            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        //fun state(): StateFlow<State>
+        fun name(): StateFlow<String>
+        fun iconList(): StateFlow<List<IconUIModel>>
+        fun icon(): StateFlow<IconUIModel?>
+        fun iconColorList(): StateFlow<List<IconColorUIModel>>
+        fun iconColor(): StateFlow<IconColorUIModel?>
+        fun currencyList(): StateFlow<List<CurrencyUIModel>>
+        fun currency(): StateFlow<CurrencyUIModel?>
+        fun sum(): StateFlow<Double>
+        fun note(): StateFlow<String>
+        fun leavePage(): SharedFlow<Unit>
+    }
 
-    val iconList: StateFlow<List<IconUIModel>> =
-        db.iconDao().getAllFlow().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    class ViewModel : androidx.lifecycle.ViewModel(), Inputs, Outputs {
 
-    val iconColorList: StateFlow<List<IconColorUIModel>> =
-        db.iconColorDao().getAllFlow().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        val inputs: Inputs = this
+        val outputs: Outputs = this
 
-    fun start(accountId: Int?) {
-        if (data.accountId == accountId)
-            return
-        else {
-            state.value = State.INIT
+        private val db
+            get() = MainApp.instance.db
+
+        private val accountDao = db.accountDao()
+        private val iconDao = db.iconDao()
+        private val iconColoDao = db.iconColorDao()
+        private val currencyDao = db.activeCurrencyDao()
+
+        private var currentAccountId: Int? = null
+        private var accountEntity: AccountWithAllRelations? = null
+        private var state = MutableStateFlow(State.NONE)
+        private val uiState = MutableStateFlow<UIState>(UIState.none())
+        private val name = MutableStateFlow("")
+        private val icon = MutableStateFlow<IconUIModel?>(null)
+        private val iconList = MutableStateFlow<List<IconUIModel>>(emptyList())
+        private val iconColor = MutableStateFlow<IconColorUIModel?>(null)
+        private val iconColorList = MutableStateFlow<List<IconColorUIModel>>(emptyList())
+        private val currency = MutableStateFlow<CurrencyUIModel?>(null)
+        private val currencyList = MutableStateFlow<List<CurrencyUIModel>>(emptyList())
+        private val sum = MutableStateFlow(0.0)
+        private val note = MutableStateFlow("")
+        private val leavePage = MutableSharedFlow<Unit>()
+
+        init {
+
+
             viewModelScope.launch {
-                when {
-                    accountId == null -> startNoneState()
-                    accountId == -1 -> startCreateState()
-                    accountId >= 0 -> startInfoState(accountId)
+
+                launch {
+                    iconDao.getAllFlow().collect { iconList.value = it }
+                }
+
+                launch {
+                    iconColoDao.getAllFlow().collect { iconColorList.value = it }
+                }
+
+                launch {
+                    currencyDao.getAllFlow().collect { currencyList.value = it }
+                }
+
+                state.collect {
+                    when (it) {
+                        State.NONE, State.INIT, State.CREATE -> {
+                            cleanAccountData()
+                        }
+
+                        State.INFO -> {
+                            val result = loadAccountData();
+                            if (!result)
+                                state.value = State.NONE
+                        }
+
+                        else -> {}
+                    }
+
+                    uiState.value = UIState.fromState(it)
                 }
             }
         }
-    }
 
-    private fun startNoneState() {
-        data.clean()
-        state.value = State.NONE
-    }
-
-    private fun startCreateState() {
-        data.clean()
-        state.value = State.CREATE
-    }
-
-    private suspend fun startInfoState(accountId: Int) {
-        db.accountDao().getWithAllRelationsById(accountId)?.run {
-            data.let {
-                it.accountId = accountId
-                it.accountName = account.name
-                it.amountValue = account.amountValue
-                it.note = ""
-                it.currency = activeCurrency
-                it.icon = icon
-                it.iconColor = iconColor
+        fun start(accountId: Int?) {
+            if (currentAccountId != accountId) {
+                currentAccountId = accountId
+                state.run {
+                    value = State.INIT
+                    viewModelScope.launch {
+                        when {
+                            accountId == null -> value = State.NONE
+                            accountId == -1 -> value = State.CREATE
+                            accountId >= 0 -> value = State.INFO
+                        }
+                    }
+                }
             }
-            state.value = State.INFO
-        } ?: run {
-            startNoneState()
         }
-    }
 
-    // maybe insert and update here too?
-    fun getAccountFromCurrentData(): AccountEntity? {
-        with(data) {
-            val _id = accountId?.let {
-                if (it > 0)
-                    it
-                else
-                    0
+        private fun cleanAccountData() {
+            name.value = ""
+            sum.value = 0.0
+            note.value = ""
+            currency.value = null
+            icon.value = null
+            iconColor.value = null
+        }
+
+        private suspend fun loadAccountData(): Boolean {
+            currentAccountId?.let { id ->
+                accountEntity = accountDao.getWithAllRelationsById(id)
+                accountEntity
+            }?.let { accountData ->
+                name.value = accountData.account.name
+                sum.value = accountData.account.amountValue
+                note.value = ""
+                currency.value = accountData.activeCurrency
+                icon.value = accountData.icon
+                iconColor.value = accountData.iconColor
+                //state = State.INFO
+                return true
+            } ?: return false
+        }
+
+        private suspend fun _leavePage() {
+            viewModelScope.launch {
+                leavePage.emit(Unit)
+            }
+        }
+
+        private suspend fun create() {
+            viewModelScope.launch {
+                createAccountEntityFromCurrentData()?.let {
+                    accountDao.insert(it)
+                }
+            }
+        }
+
+        private suspend fun update() {
+            viewModelScope.launch {
+                createAccountEntityFromCurrentData()?.let {
+                    accountDao.update(it)
+                }
+            }
+        }
+
+        private suspend fun delete() {
+            currentAccountId?.let {
+                viewModelScope.launch {
+                    db.accountDao().deleteById(it)
+                }
+            }
+        }
+
+        private fun createAccountEntityFromCurrentData(): AccountEntity? {
+            val _id = currentAccountId?.let {
+                if (it > 0) it else 0
             } ?: 0
-            val _accountName = accountName
-            val _amountValue = amountValue
-            //val _note = note
-            val _currency = currency
-            val _icon = icon
-            val _iconColor = iconColor
-
-            if (_accountName != null && _amountValue != null && /*_note != null &&*/ _currency != null && _icon != null && _iconColor != null) {
+            val _accountName = name.value
+            val _amountValue = sum.value
+            val _note = note.value
+            val _currency = currency.value
+            val _icon = icon.value
+            val _iconColor = iconColor.value
+            if (_accountName != null && _amountValue != null && _note != null && _currency != null && _icon != null && _iconColor != null) {
                 return AccountEntity(
                     id = _id,
                     name = _accountName,
                     amountValue = _amountValue,
                     activeCurrencyId = (_currency as ActiveCurrencyEntity).id,
                     iconId = (_icon as IconEntity).id,
-                    iconColorId = (_iconColor as IconColorEntity).id
+                    iconColorId = (_iconColor as IconColorEntity).id,
+                    //note = _note
                 )
-            } else {
+            } else
                 return null
+        }
+
+
+        override fun name(name: String) {
+            this.name.value = name
+        }
+
+        override fun icon(icon: IconUIModel?) {
+            this.icon.value = icon
+        }
+
+        override fun iconColor(iconColor: IconColorUIModel?) {
+            this.iconColor.value = iconColor
+        }
+
+        override fun currency(currency: CurrencyUIModel?) {
+            this.currency.value = currency
+        }
+
+        override fun sum(sum: Double) {
+            this.sum.value = sum
+        }
+
+        override fun note(note: String) {
+            this.note.value = note
+        }
+
+        override fun primaryActionClick() {
+            when (state.value) {
+                State.NONE, State.INIT -> {}
+                State.INFO -> state.value = State.UPDATE
+                State.CREATE -> viewModelScope.launch {
+                    create()
+                    _leavePage()
+                }
+
+                State.UPDATE -> {
+                    viewModelScope.launch {
+                        update()
+                    }
+                    state.value = State.INFO
+                }
             }
         }
-    }
 
-    fun insertAccount(account: AccountEntity) {
-        viewModelScope.launch {
-            db.accountDao().insert(account)
+        override fun secondaryActionClick() {
+            when (state.value) {
+                State.NONE, State.INIT -> {}
+                State.INFO -> viewModelScope.launch {
+                    delete()
+                    _leavePage()
+                }
+
+                State.CREATE -> viewModelScope.launch { _leavePage() }
+                State.UPDATE -> state.value = State.INFO
+            }
         }
+
+
+        override fun uiState(): StateFlow<UIState> = uiState
+
+        //override fun state(): StateFlow<State> = state
+        override fun name(): StateFlow<String> = name
+        override fun iconList(): StateFlow<List<IconUIModel>> = iconList
+        override fun icon(): StateFlow<IconUIModel?> = icon
+        override fun iconColorList(): StateFlow<List<IconColorUIModel>> = iconColorList
+        override fun iconColor(): StateFlow<IconColorUIModel?> = iconColor
+        override fun currencyList(): StateFlow<List<CurrencyUIModel>> = currencyList
+        override fun currency(): StateFlow<CurrencyUIModel?> = currency
+        override fun sum(): StateFlow<Double> = sum
+        override fun note(): StateFlow<String> = note
+        override fun leavePage(): SharedFlow<Unit> = leavePage
     }
 
-    fun updateAccount(account: AccountEntity) {
-        viewModelScope.launch {
-            db.accountDao().update(account)
-        }
-    }
-
-    fun deleteAccount(account: AccountEntity) {
-        viewModelScope.launch {
-            db.accountDao().delete(account)
-        }
-    }
-
-    fun deleteAccount2(accountId: Int) {
-        viewModelScope.launch {
-            db.accountDao().deleteById(accountId)
-        }
-    }
-
-    data class Data(
-        var accountId: Int? = null,
-        var accountName: String? = null,
-        var amountValue: Double? = null,
-        var note: String? = null,
-        var currency: CurrencyUIModel? = null,
-        var icon: IconUIModel? = null,
-        var iconColor: IconColorUIModel? = null,
+    data class UIState(
+        val enableChange: Boolean,
+        val primaryActionButtonText: String,
+        val secondaryActionButtonText: String,
     ) {
-        fun clean() {
-            accountId = null
-            accountName = null
-            amountValue = null
-            note = null
-            currency = null
-            icon = null
-            iconColor = null
+        companion object {
+            fun info(): UIState =
+                UIState(
+                    false,
+                    "Изменить",
+                    "Удалить"
+                )
+
+            fun create(): UIState =
+                UIState(
+                    true,
+                    "Создать",
+                    "Отменить"
+                )
+
+            fun update(): UIState =
+                UIState(
+                    true,
+                    "Применить",
+                    "Отменить"
+                )
+
+            fun none(): UIState =
+                UIState(
+                    false,
+                    "",
+                    ""
+                )
+
+            fun fromState(state: State): UIState {
+                return when (state) {
+                    State.NONE, State.INIT -> none()
+                    State.INFO -> info()
+                    State.CREATE -> create()
+                    State.UPDATE -> update()
+                }
+            }
         }
+
     }
 
     enum class State {
@@ -156,7 +327,6 @@ class AccountViewModel : ViewModel() {
         INFO,
         CREATE,
         UPDATE,
-        ERROR,
     }
-
 }
+

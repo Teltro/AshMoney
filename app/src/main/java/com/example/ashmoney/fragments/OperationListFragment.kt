@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 
 class OperationListFragment : Fragment() {
 
-    private val viewModel: OperationListViewModel by viewModels()
+    private val viewModel: OperationListViewModel.ViewModel by viewModels()
 
     private lateinit var binding: FragmentOperationListBinding
     private lateinit var navController: NavController
@@ -57,7 +57,7 @@ class OperationListFragment : Fragment() {
             setupDefaultVerticalList(recyclerView, adapter)
 
             lifecycleScope.launch {
-                viewModel.list.collect(adapter::submitList)
+                viewModel.outputs.operationList().collect(adapter::submitList)
             }
         }
     }

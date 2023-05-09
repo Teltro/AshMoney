@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 
 class AccountListFragment : Fragment() {
 
-    private val viewModel: AccountListViewModel by viewModels()
+    private val viewModel: AccountListViewModel.ViewModel by viewModels()
     private lateinit var binding: FragmentAccountListBinding
     private lateinit var navController: NavController
 
@@ -55,7 +55,7 @@ class AccountListFragment : Fragment() {
             recyclerView.adapter = accountAdapter
 
             lifecycleScope.launch {
-                viewModel.list.collect(accountAdapter::submitList)
+                viewModel.outputs.accountList().collect(accountAdapter::submitList)
             }
 
             //viewModel.list.observe(viewLifecycleOwner, accountAdapter::submitList)

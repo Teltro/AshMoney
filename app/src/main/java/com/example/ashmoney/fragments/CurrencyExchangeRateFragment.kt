@@ -1,12 +1,12 @@
 package com.example.ashmoney.fragments
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,14 +16,12 @@ import com.example.ashmoney.adapters.CurrencyExchangeRateAdapter
 import com.example.ashmoney.adapters.CurrencyRadioAdapter
 import com.example.ashmoney.databinding.FragmentCurrencyExchangeRateBinding
 import com.example.ashmoney.itemDecorations.RadioItemDecoration
-import com.example.ashmoney.utils.toEditable
-import com.example.ashmoney.viewmodels.AccountViewModel
 import com.example.ashmoney.viewmodels.CurrencyExchangeRateViewModel
 import kotlinx.coroutines.launch
 
 class CurrencyExchangeRateFragment : Fragment() {
 
-    private val viewModel: CurrencyExchangeRateViewModel by viewModels()
+    private val viewModel: CurrencyExchangeRateViewModel.ViewModel by viewModels()
 
     private lateinit var binding: FragmentCurrencyExchangeRateBinding
 
@@ -46,19 +44,22 @@ class CurrencyExchangeRateFragment : Fragment() {
 
         setupCurrencyList()
         setupCurrencyExchangeRateList()
-        setupSumEditTextListener()
-
-        startStateManaging()
+        setupSumField()
     }
 
     private fun setupCurrencyList() {
         currencyAdapter = CurrencyRadioAdapter {
-            viewModel.selectedCurrency.value = it
+            viewModel.inputs.currency(it)
         }
         setupDefaultHorizontalList(binding.fragmentCurrencyExchangeRateCurrencyRecyclerView, currencyAdapter)
 
         lifecycleScope.launch {
-            viewModel.currencyList.collect(currencyAdapter::submitList)
+            launch {
+                viewModel.outputs.currencyList().collect(currencyAdapter::submitList)
+            }
+            launch {
+                viewModel.outputs.currency().collect { currencyAdapter.selectedItem = it }
+            }
         }
     }
 
@@ -72,15 +73,28 @@ class CurrencyExchangeRateFragment : Fragment() {
         }
 
         lifecycleScope.launch {
-            viewModel.currencyExchangeRateList.collect(currencyExchangeRateAdapter::submitList)
+            launch {
+                viewModel.outputs.currencyExchangeRateList().collect(currencyExchangeRateAdapter::submitList)
+            }
+            launch {
+                viewModel.outputs.convertingSum().collect { currencyExchangeRateAdapter.convertingSum = it }
+            }
         }
     }
 
-    private fun setupSumEditTextListener() {
-        binding.fragmentCurrencyExchangeRateSumEditText.doAfterTextChanged {
-            val sum = it.toString().toDoubleOrNull() ?: 1.0
-            currencyExchangeRateAdapter.sum = sum
-            viewModel.data.sum = sum
+    private fun setupSumField() {
+        with(binding) {
+            lifecycleScope.launch {
+                viewModel.outputs.convertingSum().collect {
+                    if (!fragmentCurrencyExchangeRateSumEditText.hasFocus())
+                        fragmentCurrencyExchangeRateSumEditText.setText(it.toString())
+                }
+            }
+            fragmentCurrencyExchangeRateSumEditText.doAfterTextChanged {
+                val sum = it.toString().toDoubleOrNull() ?: 1.0
+                currencyExchangeRateAdapter.convertingSum = sum
+                viewModel.inputs.convertingSum(sum)
+            }
         }
     }
 
@@ -100,29 +114,6 @@ class CurrencyExchangeRateFragment : Fragment() {
             drawable?.let {
                 val itemDecoration = RadioItemDecoration(drawable, orientation)
                 recyclerView.addItemDecoration(itemDecoration)
-            }
-        }
-    }
-
-    private fun startStateManaging() {
-        lifecycleScope.launch {
-            viewModel.state.collect { state ->
-                if (state == CurrencyExchangeRateViewModel.State.INFO) {
-                    setVisualDataFromViewModel()
-                }
-            }
-        }
-    }
-
-    private fun setVisualDataFromViewModel() {
-        viewModel.data.let { data ->
-            with(binding) {
-                currencyAdapter.selectedItem = data.selectedCurrency
-                data.sum?.let {
-                    fragmentCurrencyExchangeRateSumEditText.text = it.toString().toEditable()
-                } ?: {
-                    fragmentCurrencyExchangeRateSumEditText.text = "1.0".toEditable()
-                }
             }
         }
     }

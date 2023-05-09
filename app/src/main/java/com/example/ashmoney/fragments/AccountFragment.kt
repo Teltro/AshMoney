@@ -19,6 +19,7 @@ import com.example.ashmoney.adapters.IconColorRadioAdapter
 import com.example.ashmoney.adapters.IconRadioAdapter
 import com.example.ashmoney.databinding.FragmentAccountBinding
 import com.example.ashmoney.itemDecorations.RadioItemDecoration
+import com.example.ashmoney.utils.toEditable
 import com.example.ashmoney.viewmodels.AccountViewModel
 import kotlinx.coroutines.launch
 
@@ -28,7 +29,7 @@ class AccountFragment : Fragment() {
         const val ACCOUNT_ID_KEY = "accountId"
     }
 
-    private val viewModel: AccountViewModel by viewModels()
+    private val viewModel: AccountViewModel.ViewModel by viewModels()
 
     private lateinit var binding: FragmentAccountBinding
 
@@ -57,45 +58,63 @@ class AccountFragment : Fragment() {
         setupIconList()
         setupIconColorList()
         setupCurrencyList()
+        setupNameField()
+        setupSumField()
+        setupNoteField()
+        setupButtons()
+        setupLeavePage()
 
-        setupFieldListeners()
-        startStateManaging()
+        startUiStateManaging()
     }
 
     private fun setupIconList() {
         iconAdapter = IconRadioAdapter {
-            viewModel.data.icon = it
+            viewModel.inputs.icon(it)
         }
         setupDefaultHorizontalList(binding.fragmentAccountIconRecyclerView, iconAdapter)
         lifecycleScope.launch {
-            viewModel.iconList.collect(iconAdapter::submitList)
+            launch {
+                viewModel.outputs.iconList().collect(iconAdapter::submitList)
+            }
+            launch {
+                viewModel.outputs.icon().collect { iconAdapter.selectedItem = it }
+            }
+            launch {
+                viewModel.outputs.iconColor().collect { iconAdapter.iconColor = it }
+            }
         }
-        //viewModel.iconList.observe(viewLifecycleOwner, iconAdapter::submitList)
     }
 
     private fun setupIconColorList() {
         iconColorAdapter = IconColorRadioAdapter {
-            viewModel.data.iconColor = it
-            iconAdapter.iconColor = it
+            viewModel.inputs.iconColor(it)
         }
         setupDefaultHorizontalList(binding.fragmentAccountIconColorRecyclerView, iconColorAdapter)
         lifecycleScope.launch {
-            viewModel.iconColorList.collect(iconColorAdapter::submitList)
+            launch {
+                viewModel.outputs.iconColorList().collect(iconColorAdapter::submitList)
+            }
+            launch {
+                viewModel.outputs.iconColor().collect { iconColorAdapter.selectedItem = it }
+            }
+
         }
-        //viewModel.iconColorList.observe(viewLifecycleOwner, iconColorAdapter::submitList)
     }
 
     private fun setupCurrencyList() {
         currencyAdapter = CurrencyRadioAdapter {
-            viewModel.data.currency = it
+            viewModel.inputs.currency(it)
         }
         setupDefaultHorizontalList(binding.fragmentAccountCurrencyRecyclerView, currencyAdapter)
 
         lifecycleScope.launch {
-            viewModel.currencyList.collect(currencyAdapter::submitList)
+            launch {
+                viewModel.outputs.currencyList().collect(currencyAdapter::submitList)
+            }
+            launch {
+                viewModel.outputs.currency().collect { currencyAdapter.selectedItem = it }
+            }
         }
-
-        //viewModel.currencyList.observe(viewLifecycleOwner, currencyAdapter::submitList)
     }
 
     private fun setupDefaultHorizontalList(
@@ -118,120 +137,71 @@ class AccountFragment : Fragment() {
         }
     }
 
-    private fun setupFieldListeners() {
-        binding.fragmentAccountNameTextView.doAfterTextChanged {
-            viewModel.data.accountName = it.toString()
+    private fun setupNameField() {
+        with(binding) {
+            lifecycleScope.launch {
+                viewModel.outputs.name().collect {
+                    fragmentAccountNameTextView.text = it.toEditable()
+                }
+            }
+            fragmentAccountNameTextView.doAfterTextChanged {
+                viewModel.inputs.name(it.toString())
+            }
         }
-        binding.fragmentAccountStartAmountTextView.doAfterTextChanged {
-            viewModel.data.run {
-                if (it != null && it.isNotEmpty())
-                    amountValue = it.toString().toDouble()
+    }
+
+    private fun setupSumField() {
+        with(binding) {
+            lifecycleScope.launch {
+                viewModel.outputs.sum().collect { fragmentAccountStartAmountTextView.text = it.toString().toEditable() }
+            }
+            fragmentAccountStartAmountTextView.doAfterTextChanged {
+                val inputValue = if (it != null && it.isNotEmpty())
+                    it.toString().toDouble()
                 else
-                    amountValue = 0.0;
+                    0.0
+                viewModel.inputs.sum(inputValue)
             }
-        }
-        binding.fragmentAccountNoteTextView.doAfterTextChanged {
-            viewModel.data.note = it.toString()
         }
     }
 
-    private fun startStateManaging() {
+    private fun setupNoteField() {
+        with(binding) {
+            lifecycleScope.launch {
+                viewModel.outputs.note().collect { fragmentAccountNoteTextView.text = it.toEditable() }
+            }
+            fragmentAccountNoteTextView.doAfterTextChanged {
+                viewModel.inputs.note(it.toString())
+            }
+        }
+    }
+
+    private fun setupButtons() {
+        with(binding) {
+            fragmentAccountPrimaryActionButton.setOnClickListener {
+                viewModel.primaryActionClick()
+            }
+            fragmentAccountSecondaryActionButton.setOnClickListener {
+                viewModel.secondaryActionClick()
+            }
+        }
+    }
+
+    private fun setupLeavePage() {
         lifecycleScope.launch {
-            viewModel.state.collect { state ->
-                if (state != AccountViewModel.State.INIT && state != AccountViewModel.State.NONE) {
-                    setVisualDataFromViewModel()
-                }
-
-                when (state) {
-                    AccountViewModel.State.NONE, AccountViewModel.State.INIT, AccountViewModel.State.ERROR -> handleNoneState()
-                    AccountViewModel.State.INFO -> handleInfoState()
-                    AccountViewModel.State.CREATE -> handleCreateState()
-                    AccountViewModel.State.UPDATE -> handleUpdateState()
-                }
-            }
-        }
-    }
-
-    private fun setVisualDataFromViewModel() {
-        viewModel.data.let { data ->
-            with(binding) {
-                data.accountName?.let { fragmentAccountNameTextView.setText(it) }
-                data.amountValue?.let { fragmentAccountStartAmountTextView.setText(it.toString()) }
-                data.note?.let { fragmentAccountNoteTextView.setText(it) }
-                data.currency?.let {
-                    if (currencyAdapter.selectedItem != it) currencyAdapter.selectedItem = it
-                }
-                data.icon?.let {
-                    if (iconAdapter.selectedItem != it) iconAdapter.selectedItem = it
-                }
-                data.iconColor?.let {
-                    if (iconColorAdapter.selectedItem != it) iconColorAdapter.selectedItem = it
-                }
-            }
-        }
-    }
-
-    private fun handleNoneState() {
-        binding.run {
-            fragmentAccountPrimaryActionButton.text = ""
-            fragmentAccountSecondaryActionButton.text = ""
-            fragmentAccountPrimaryActionButton.setOnClickListener(null)
-            fragmentAccountSecondaryActionButton.setOnClickListener(null)
-        }
-    }
-
-    private fun handleInfoState() {
-        binding.run {
-            fragmentAccountPrimaryActionButton.text = "Изменить"
-            fragmentAccountSecondaryActionButton.text = "Удалить"
-            fragmentAccountPrimaryActionButton.setOnClickListener {
-                viewModel.state.value = AccountViewModel.State.UPDATE
-            }
-            fragmentAccountSecondaryActionButton.setOnClickListener {
-                viewModel.data.accountId?.let {
-                    // TODO add confirm window
-                    //viewModel.deleteAccount(it)
-                    viewModel.deleteAccount2(it)
-                    navController.popBackStack()
-                }
-            }
-        }
-    }
-
-    private fun handleCreateState() {
-        binding.run {
-            fragmentAccountPrimaryActionButton.text = "Создать"
-            fragmentAccountSecondaryActionButton.text = "Отменить"
-            fragmentAccountPrimaryActionButton.setOnClickListener {
-                // TODO check fields?
-                //val account = viewModel.getAccountFromCurrentDataForUpdate()
-                val account = viewModel.getAccountFromCurrentData()
-                account?.let {
-                    viewModel.insertAccount(it)
-                    navController.popBackStack()
-                } ?: throw IllegalStateException() // TODO handle error(mb toast?)
-            }
-            fragmentAccountSecondaryActionButton.setOnClickListener {
+            viewModel.outputs.leavePage().collect {
                 navController.popBackStack()
             }
         }
     }
 
-    private fun handleUpdateState() {
-        binding.run {
-            fragmentAccountPrimaryActionButton.text = "Применить"
-            fragmentAccountSecondaryActionButton.text = "Отменить"
-            fragmentAccountPrimaryActionButton.setOnClickListener {
-                // TODO check fields?
-                //val account = viewModel.getAccountFromCurrentDataForCreate()
-                val account = viewModel.getAccountFromCurrentData()
-                account?.let {
-                    viewModel.updateAccount(it)
-                    viewModel.state.value = AccountViewModel.State.INFO
-                } ?: throw IllegalStateException() // TODO handle error(mb toast?)
-            }
-            fragmentAccountSecondaryActionButton.setOnClickListener {
-                viewModel.state.value = AccountViewModel.State.INFO
+    private fun startUiStateManaging() {
+        lifecycleScope.launch {
+            viewModel.outputs.uiState().collect {
+                with(binding) {
+                    fragmentAccountPrimaryActionButton.text = it.primaryActionButtonText
+                    fragmentAccountSecondaryActionButton.text = it.secondaryActionButtonText
+                }
             }
         }
     }

@@ -1,6 +1,5 @@
 package com.example.ashmoney.viewmodels
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ashmoney.core.MainApp
 import com.example.ashmoney.models.ui.CurrencyExchangeRateUIModel
@@ -9,54 +8,73 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class CurrencyExchangeRateViewModel : ViewModel() {
+interface CurrencyExchangeRateViewModel {
 
-    // must be in the user settings as default currency
-    private val defaultCurrencyId = 1
 
-    private val db
-        get() = MainApp.instance.db
+    interface Inputs {
+        fun currency(currency: CurrencyUIModel?)
+        fun convertingSum(convertingSum: Double)
+    }
 
-    val data = Data();
-
-    val state: MutableStateFlow<State> = MutableStateFlow(State.NONE)
-
-    val currencyList: StateFlow<List<CurrencyUIModel>> =
-        db.activeCurrencyDao().getAllFlow()
-            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
-    val selectedCurrency: MutableStateFlow<CurrencyUIModel?> = MutableStateFlow(null)
+    interface Outputs {
+        fun currency(): StateFlow<CurrencyUIModel?>
+        fun currencyList(): StateFlow<List<CurrencyUIModel>>
+        fun convertingSum(): StateFlow<Double>
+        fun currencyExchangeRateList(): StateFlow<List<CurrencyExchangeRateUIModel>>
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val currencyExchangeRateList: StateFlow<List<CurrencyExchangeRateUIModel>> =
-        selectedCurrency.flatMapLatest {
-            it?.let {
-                db.currencyExchangeRateDao().getAllEntityViewFlowByCurrencyId(it.id)
-            } ?: emptyFlow()
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    class ViewModel : androidx.lifecycle.ViewModel(), Inputs, Outputs {
 
+        val inputs: Inputs = this
+        val outputs: Outputs = this
 
-    fun start() {
-        state.value = State.INIT
-        viewModelScope.launch {
-            db.activeCurrencyDao().getById(defaultCurrencyId).let {
-                selectedCurrency.value = it
-                data.selectedCurrency = it
+        private val activeCurrencyDao = MainApp.instance.db.activeCurrencyDao()
+        private val currencyExchangeRateDao = MainApp.instance.db.currencyExchangeRateDao()
+
+        // must be in the user settings as default currency
+        private val defaultCurrencyId = 2
+
+        private val currency = MutableStateFlow<CurrencyUIModel?>(null)
+        private val currencyList = MutableStateFlow<List<CurrencyUIModel>>(emptyList())
+        private val convertingSum = MutableStateFlow(1.0)
+        private val currencyExchangeRateList = MutableStateFlow<List<CurrencyExchangeRateUIModel>>(emptyList())
+
+        init {
+            viewModelScope.launch {
+                launch {
+                    activeCurrencyDao.getAllFlow().collect { currencyList.value = it }
+                }
+                launch {
+                    currency.flatMapLatest {
+                        it?.let {
+                            currencyExchangeRateDao.getAllEntityViewFlowByCurrencyId(it.id)
+                        } ?: emptyFlow()
+                    }.collect { currencyExchangeRateList.value = it }
+                }
             }
-            data.sum = 1.0
-
-            state.value = State.INFO
         }
+
+        fun start() {
+            viewModelScope.launch {
+                activeCurrencyDao.getById(defaultCurrencyId).let {
+                    currency.value = it
+                }
+            }
+        }
+
+        override fun currency(currency: CurrencyUIModel?) {
+            this.currency.value = currency
+        }
+
+        override fun convertingSum(convertingSum: Double) {
+            this.convertingSum.value = convertingSum
+        }
+
+        override fun currency(): StateFlow<CurrencyUIModel?> = currency
+        override fun currencyList(): StateFlow<List<CurrencyUIModel>> = currencyList
+        override fun convertingSum(): StateFlow<Double> = convertingSum
+        override fun currencyExchangeRateList(): StateFlow<List<CurrencyExchangeRateUIModel>> = currencyExchangeRateList
     }
 
-    data class Data(
-        var selectedCurrency: CurrencyUIModel? = null,
-        var sum: Double? = null,
-    )
-
-    enum class State {
-        NONE,
-        INIT,
-        INFO
-    }
 }

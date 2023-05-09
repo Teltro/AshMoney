@@ -1,16 +1,41 @@
 package com.example.ashmoney.viewmodels
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ashmoney.core.MainApp
 import com.example.ashmoney.models.ui.AccountUIModel
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
-class AccountListViewModel: ViewModel() {
+interface AccountListViewModel {
 
-    val list: StateFlow<List<AccountUIModel>> =
-        MainApp.instance.db.accountDao().getAllWithAllRelationsFlow().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    interface Inputs {
+
+    }
+
+    interface Outputs {
+        fun accountList(): StateFlow<List<AccountUIModel>>
+    }
+
+    class ViewModel : androidx.lifecycle.ViewModel(), Inputs, Outputs {
+
+        val inputs: Inputs = this
+        val outputs: Outputs = this
+
+        val accountDao = MainApp.instance.db.accountDao()
+
+        private val accountList = MutableStateFlow<List<AccountUIModel>>(emptyList())
+
+        init {
+            viewModelScope.launch {
+                accountDao.getAllWithAllRelationsFlow().collect {
+                    accountList.value = it
+                }
+            }
+        }
+
+        override fun accountList(): StateFlow<List<AccountUIModel>> = accountList
+
+    }
 
 }

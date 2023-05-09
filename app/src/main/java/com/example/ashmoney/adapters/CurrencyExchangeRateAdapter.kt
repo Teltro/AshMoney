@@ -12,7 +12,7 @@ class CurrencyExchangeRateAdapter :
         RecyclerViewUIModelDiffCallback()
     ) {
 
-    var sum: Double = 1.0
+    var convertingSum: Double = 1.0
         set(value) {
             sumUpdateSubscribedSet.forEach { it.sum = value }
             field = value
@@ -38,7 +38,7 @@ class CurrencyExchangeRateAdapter :
     override fun onBindViewHolder(holder: CurrencyExchangeRateHolder, position: Int) {
         val item = currentList[position]
 
-        holder.bind(item, sum)
+        holder.bind(item, convertingSum)
         sumUpdateSubscribedSet.add(holder)
     }
 

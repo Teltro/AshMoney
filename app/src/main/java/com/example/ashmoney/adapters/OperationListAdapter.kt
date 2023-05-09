@@ -4,11 +4,11 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.example.ashmoney.R
 import com.example.ashmoney.holder.OperationListHolder
-import com.example.ashmoney.models.ui.OperationListUIModel2
+import com.example.ashmoney.models.ui.OperationListUIModel
 
 class OperationListAdapter(
-    onClick: ((item: OperationListUIModel2) -> Unit)? = null
-) : ClickedListAdapter<OperationListUIModel2, OperationListHolder>(onClick) {
+    onClick: ((item: OperationListUIModel) -> Unit)? = null
+) : ClickedListAdapter<OperationListUIModel, OperationListHolder>(onClick) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OperationListHolder {
         val itemView = LayoutInflater
