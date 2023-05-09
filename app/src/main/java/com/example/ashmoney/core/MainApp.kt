@@ -42,8 +42,8 @@ class MainApp : Application() {
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             //MainScope().launch(Dispatchers.IO) {
             db.activeCurrencyDao().insert(
-                ActiveCurrencyEntity(name = "BYN", isoCode = 933),
-                ActiveCurrencyEntity(name = "USD", isoCode = 840)
+                ActiveCurrencyEntity(name = "USD", isoCode = 840),
+                ActiveCurrencyEntity(name = "BYN", isoCode = 933)
             )
 
             db.iconColorDao().insert(
@@ -112,21 +112,21 @@ class MainApp : Application() {
                 AccountEntity(
                     name = "Наличные",
                     amountValue = 15.0,
-                    activeCurrencyId = activeCurrencyList[0].id,
+                    activeCurrencyId = activeCurrencyList[1].id,
                     iconId = iconList[4].id,
                     iconColorId = iconColorList[0].id
                 ),
                 AccountEntity(
                     name = "Банк",
                     amountValue = 20.0,
-                    activeCurrencyId = activeCurrencyList[1].id,
+                    activeCurrencyId = activeCurrencyList[0].id,
                     iconId = iconList[9].id,
                     iconColorId = iconColorList[1].id
                 ),
                 AccountEntity(
                     name = "Копилка",
                     amountValue = 30.0,
-                    activeCurrencyId = activeCurrencyList[0].id,
+                    activeCurrencyId = activeCurrencyList[1].id,
                     iconId = iconList[8].id,
                     iconColorId = iconColorList[2].id
                 )
@@ -185,7 +185,7 @@ class MainApp : Application() {
                     toAccountId = accountList[0].id,
                     operationCategoryId = operationCategoryList[3].id,
                     sum = 5.0,
-                    activeCurrencyId = activeCurrencyList[0].id,
+                    activeCurrencyId = activeCurrencyList[1].id,
                     dateTime = Date().toIsoString(),
                     note = null
                 ),
@@ -197,7 +197,7 @@ class MainApp : Application() {
                     toAccountId = accountList[0].id,
                     operationCategoryId = operationCategoryList[4].id,
                     sum = 15.0,
-                    activeCurrencyId = activeCurrencyList[0].id,
+                    activeCurrencyId = activeCurrencyList[1].id,
                     dateTime = Date().toIsoString(),
                     note = null
                 ),
@@ -209,7 +209,7 @@ class MainApp : Application() {
                     toAccountId = null,
                     operationCategoryId = operationCategoryList[2].id,
                     sum = 2.0,
-                    activeCurrencyId = activeCurrencyList[0].id,
+                    activeCurrencyId = activeCurrencyList[1].id,
                     dateTime = Date().toIsoString(),
                     note = null
                 ),
@@ -221,7 +221,7 @@ class MainApp : Application() {
                     toAccountId = null,
                     operationCategoryId = operationCategoryList[0].id,
                     sum = 3.0,
-                    activeCurrencyId = activeCurrencyList[0].id,
+                    activeCurrencyId = activeCurrencyList[1].id,
                     dateTime = Date().toIsoString(),
                     note = null
                 ),
@@ -233,7 +233,7 @@ class MainApp : Application() {
                     toAccountId = accountList[1].id,
                     operationCategoryId = null,
                     sum = 4.0,
-                    activeCurrencyId = activeCurrencyList[0].id,
+                    activeCurrencyId = activeCurrencyList[1].id,
                     dateTime = Date().toIsoString(),
                     note = null
                 ),
@@ -245,7 +245,7 @@ class MainApp : Application() {
                     toAccountId = accountList[2].id,
                     operationCategoryId = null,
                     sum = 4.0,
-                    activeCurrencyId = activeCurrencyList[0].id,
+                    activeCurrencyId = activeCurrencyList[1].id,
                     dateTime = Date().toIsoString(),
                     note = null
                 ),

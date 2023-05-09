@@ -6,6 +6,7 @@ plugins {
 }
 repositories {
     mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 android {
@@ -91,5 +92,7 @@ dependencies {
 
     // optional - RxJava2 support for Room
     implementation "androidx.room:room-rxjava2:$room_version"
+
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 
 }

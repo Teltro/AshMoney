@@ -23,4 +23,7 @@ interface OperationDao : BaseDao<OperationEntity> {
     @Query("SELECT * FROM OperationView")
     fun getAllViewEntityFlow(): Flow<List<OperationView>>
 
+    @Query("SELECT * FROM OperationView WHERE operation_type_id = :operationTypeId")
+    fun getAllViewEntityFlowByOperationTypeId(operationTypeId: Int): Flow<List<OperationView>>
+
 }

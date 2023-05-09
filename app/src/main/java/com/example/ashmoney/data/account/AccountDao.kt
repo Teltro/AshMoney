@@ -27,5 +27,31 @@ interface AccountDao : BaseDao<AccountEntity> {
     @Query("SELECT * FROM account")
     fun getAllWithAllRelationsFlow(): Flow<List<AccountWithAllRelations>>
 
+    @Query("""
+        SELECT 
+        SUM(amount_value * (
+            CASE 
+                WHEN exchange.value IS NOT NULL THEN exchange.value 
+                ELSE 1.0
+            END
+        ))
+        FROM account
+        LEFT JOIN (
+            SELECT
+            exchange_rate as value,
+            currency_from_id
+            FROM currency_exchange_rate
+            WHERE currency_exchange_rate.currency_to_id = :defaultCurrencyId
+        ) AS exchange ON account.active_currency_id = exchange.currency_from_id 
+    """)
+    /*@Query("""
+        SELECT 
+        SUM(amount_value) 
+        FROM account
+        WHERE :defaultCurrencyId = :defaultCurrencyId
+
+    """)*/
+    fun getTotalSumFlow(defaultCurrencyId: Int): Flow<Double>
+
 
 }
