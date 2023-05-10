@@ -20,6 +20,7 @@ import com.example.ashmoney.adapters.OperationCategoryRadioAdapter
 import com.example.ashmoney.adapters.OperationTypeRadioAdapter
 import com.example.ashmoney.databinding.FragmentOperationBinding
 import com.example.ashmoney.itemDecorations.RadioItemDecoration
+import com.example.ashmoney.utils.round100
 import com.example.ashmoney.utils.setEnabledForAll
 import com.example.ashmoney.viewmodels.OperationViewModel
 import kotlinx.coroutines.launch
@@ -286,7 +287,7 @@ class OperationFragment : Fragment() {
                     viewModel.outputs.currencyExchangeRate()
                         .collect {
                             if (!fragmentOperationConverterToValueEditText.hasFocus())
-                                fragmentOperationConverterToValueEditText.setText(roundDouble(it).toString())
+                                fragmentOperationConverterToValueEditText.setText(it.round100().toString())
                         }
                 }
             }
@@ -301,7 +302,7 @@ class OperationFragment : Fragment() {
             viewModel.outputs.converteredSum().collect {
                 binding.fragmentOperationSumToValueEditText.run {
                     if (!hasFocus())
-                        setText(roundDouble(it).toString())
+                        setText(it.round100().toString())
                 }
             }
         }
@@ -387,13 +388,6 @@ class OperationFragment : Fragment() {
                 }
             }
         }
-    }
-
-    private fun roundDouble(value: Double): Double {
-        if (value < 1) {
-            return (value * 100).roundToInt() / 100.0
-        }
-        return value
     }
 
 }

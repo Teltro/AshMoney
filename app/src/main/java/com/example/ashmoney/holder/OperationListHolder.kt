@@ -11,6 +11,7 @@ import com.example.ashmoney.databinding.RecyclerviewOperationItem2Binding
 import com.example.ashmoney.models.ui.OperationListUIModel
 import com.example.ashmoney.utils.OperationTypeId
 import com.example.ashmoney.utils.dpToPx
+import com.example.ashmoney.utils.fillImageViewWithIconAndSelection
 import com.example.ashmoney.utils.getDrawable
 
 class OperationListHolder(val itemView: View) : ClickedListHolder<OperationListUIModel>(itemView) {
@@ -35,9 +36,17 @@ class OperationListHolder(val itemView: View) : ClickedListHolder<OperationListU
             operationTypeId?.let {
                 root.setBackgroundResource(getBackgroundColorIdByOperationId(it))
             }
-            recyclerViewOperationItemFromImageView.fillImageViewWithIcon(item.fromIconResourceName, item.fromIconColorValue)
+            recyclerViewOperationItemFromImageView.fillImageViewWithIconAndSelection(
+                item.fromIconResourceName,
+                item.fromIconColorValue,
+                circleStrokeWidth
+            )
             recyclerViewOperationItemFromTextView.text = item.fromName
-            recyclerViewOperationItemToImageView.fillImageViewWithIcon(item.toIconResourceName, item.toIconColorValue)
+            recyclerViewOperationItemToImageView.fillImageViewWithIconAndSelection(
+                item.toIconResourceName,
+                item.toIconColorValue,
+                circleStrokeWidth
+            )
             recyclerViewOperationItemToTextView.text = item.toName
             recyclerVIewOperationItemSumTextView.text = item.sum.toString()
             recyclerViewOperationItemCurrencyTextView.text = item.currencyName

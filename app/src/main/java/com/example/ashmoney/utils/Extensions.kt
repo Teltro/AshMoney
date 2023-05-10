@@ -1,11 +1,8 @@
 package com.example.ashmoney.utils
 
 import android.content.Context
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.Drawable
-import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.ShapeDrawable
-import android.graphics.drawable.VectorDrawable
+import android.graphics.Color
+import android.graphics.drawable.*
 import android.text.BoringLayout
 import android.text.Editable
 import android.util.TypedValue
@@ -14,10 +11,13 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.children
+import com.example.ashmoney.R
 import com.example.ashmoney.core.MainApp
+import com.example.ashmoney.holder.OperationListHolder
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 fun String.toEditable(): Editable = Editable.Factory.getInstance().newEditable(this)
 
@@ -65,4 +65,30 @@ fun Date.toDefaultString(): String {
 fun String.fromIsoToDate(): Date? {
     val dateFormat: DateFormat = SimpleDateFormat(ISO)
     return dateFormat.parse(this)
+}
+
+fun ImageView.fillImageViewWithIcon(iconResourceName: String, iconColorValue: String) {
+    val layerDrawable = this.background as LayerDrawable
+    val circleDrawable =
+        layerDrawable.findDrawableByLayerId(R.id.radio_icon_circle_selection_circle) as GradientDrawable
+
+    val iconDrawable = this.context.getDrawable(iconResourceName) as Drawable // ??
+    this.setImageDrawable(iconDrawable)
+}
+
+fun ImageView.fillImageViewWithIconAndSelection(iconResourceName: String, iconColorValue: String, selectionCircleStrokeWidth: Int) {
+    val layerDrawable = this.background as LayerDrawable
+    val circleDrawable =
+        layerDrawable.findDrawableByLayerId(R.id.radio_icon_circle_selection_circle) as GradientDrawable
+
+    val iconDrawable = this.context.getDrawable(iconResourceName) as Drawable // ??
+    this.setImageDrawable(iconDrawable)
+
+    val color = Color.parseColor(iconColorValue)
+    iconDrawable.setTint(color)
+    circleDrawable.setStroke(selectionCircleStrokeWidth, color)
+}
+
+fun Double.round100(): Double {
+    return (this * 100).roundToInt() / 100.0
 }

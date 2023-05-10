@@ -64,8 +64,8 @@ interface OperationDao : BaseDao<OperationEntity> {
         )
         
         SELECT
-        id,
-        name,
+        operation.id,
+        operation.name,
         operation_type_id,
         target_data.name as target_name,
         target_data.icon_resource_name as target_icon_resource_name,
@@ -89,7 +89,7 @@ interface OperationDao : BaseDao<OperationEntity> {
                     )
                 )
         WHERE operation_type_id = :operationTypeId
-        GROUP BY id
+        GROUP BY operation.id
         """)
     fun getAllViewEntityFlowByOperationTypeId(operationTypeId: Int): Flow<List<OperationPieChartView>>
 
