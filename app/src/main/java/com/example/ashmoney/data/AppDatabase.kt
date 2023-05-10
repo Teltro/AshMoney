@@ -16,7 +16,7 @@ import com.example.ashmoney.data.iconColor.IconColorDao
 import com.example.ashmoney.data.iconColor.IconColorEntity
 import com.example.ashmoney.data.operation.OperationDao
 import com.example.ashmoney.data.operation.OperationEntity
-import com.example.ashmoney.data.operation.OperationView
+import com.example.ashmoney.data.operation.OperationListView
 import com.example.ashmoney.data.operationCategory.OperationCategoryDao
 import com.example.ashmoney.data.operationCategory.OperationCategoryEntity
 import com.example.ashmoney.data.operationType.OperationTypeDao
@@ -34,7 +34,7 @@ import com.example.ashmoney.data.operationType.OperationTypeEntity
         OperationEntity::class
     ],
     views = [
-        OperationView::class
+        OperationListView::class
     ],
     version = 1
 )

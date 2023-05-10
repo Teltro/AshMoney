@@ -17,7 +17,6 @@ interface OperationUIModel : RecyclerViewUIModel {
     val category: OperationCategory?
     val note: String?
 
-
     override fun same(other: Any?): Boolean {
         return other is OperationUIModel && this.id == other.id
     }

@@ -2,7 +2,7 @@ package com.example.ashmoney.data.account
 
 import androidx.room.ColumnInfo
 
-data class AccountEntityView(
+data class AccountListView(
     @ColumnInfo(name = "account_id")
     val accountId: Int? = null,
 
@@ -18,6 +18,4 @@ data class AccountEntityView(
     @ColumnInfo(name = "icon_color_name")
     var iconColorValue: String
 
-) {
-
-}
+)

@@ -15,7 +15,7 @@ interface OperationListUIModel : RecyclerViewUIModel {
     val currencyName: String
 
     override fun same(other: Any?): Boolean {
-        return other is OperationUIModel && this.id == other.id
+        return other is OperationListUIModel && this.id == other.id
     }
 
 }

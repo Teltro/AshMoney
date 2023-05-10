@@ -85,7 +85,7 @@ import com.example.ashmoney.models.ui.OperationListUIModel
                 )
     """
 )
-data class OperationView(
+data class OperationListView(
     @ColumnInfo(name = "id")
     override val id: Int,
     @ColumnInfo(name = "name")
