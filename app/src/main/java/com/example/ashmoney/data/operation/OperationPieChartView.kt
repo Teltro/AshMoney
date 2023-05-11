@@ -27,6 +27,9 @@ data class OperationPieChartView(
     @ColumnInfo(name = "sum")
     override val sum: Double,
 
+    @ColumnInfo(name = "common_currency_sum")
+    override val commonCurrencySum: Double,
+
     @ColumnInfo(name = "percent")
     override val percent: Double,
 

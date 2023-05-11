@@ -70,11 +70,14 @@ interface OperationDao : BaseDao<OperationEntity> {
         target_data.name as target_name,
         target_data.icon_resource_name as target_icon_resource_name,
         target_data.icon_color_value as target_icon_color_value,
-        sum,    
-        sum / SUM(sum) as percent,
+        operation.sum * currency_exchange_rate as sum,    
+        (operation.sum * operation.currency_exchange_rate) / SUM(operation.sum * operation.currency_exchange_rate) as percent,
         currency_data.name as currency_name
         FROM operation
         LEFT JOIN active_currency as currency_data ON currency_data.id = operation.active_currency_id
+        LEFT JOIN currency_exchange_rate ON 
+            currency_from_id = operation.active_currency_id AND
+            currency_to_id = :defaultCurrency
         LEFT JOIN operation_members AS target_data 
             ON (
                     (
@@ -91,6 +94,18 @@ interface OperationDao : BaseDao<OperationEntity> {
         WHERE operation_type_id = :operationTypeId
         GROUP BY operation.id
         """)
-    fun getAllViewEntityFlowByOperationTypeId(operationTypeId: Int): Flow<List<OperationPieChartView>>
+    fun getPieChartViewFlowByOperationTypeId(operationTypeId: Int, defaultCurrency: Int): Flow<List<OperationPieChartView>>
+
+    @Query("""
+        SELECT
+        id, 
+        sum,
+        date_time
+        FROM
+        operation
+        WHERE operation_type_id = :operationTypeId
+        GROUP BY DATE(date_time)
+    """)
+    fun getLineChartViewFlowByOperationTypeId(operationTypeId: Int): Flow<List<OperationLineChartView>>
 
 }

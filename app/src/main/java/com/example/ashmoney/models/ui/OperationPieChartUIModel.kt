@@ -9,6 +9,7 @@ interface OperationPieChartUIModel : RecyclerViewUIModel {
     val targetIconResourceName: String
     val targetIconColorValue: String
     val sum: Double
+    val commonCurrencySum: Double
     val percent: Double
     val currencyName: String
 
