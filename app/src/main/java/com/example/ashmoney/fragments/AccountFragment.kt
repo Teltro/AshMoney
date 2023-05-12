@@ -19,6 +19,7 @@ import com.example.ashmoney.adapters.IconColorRadioAdapter
 import com.example.ashmoney.adapters.IconRadioAdapter
 import com.example.ashmoney.databinding.FragmentAccountBinding
 import com.example.ashmoney.itemDecorations.RadioItemDecoration
+import com.example.ashmoney.utils.setItemDecoration
 import com.example.ashmoney.utils.toEditable
 import com.example.ashmoney.viewmodels.AccountViewModel
 import kotlinx.coroutines.launch
@@ -71,7 +72,14 @@ class AccountFragment : Fragment() {
         iconAdapter = IconRadioAdapter {
             viewModel.inputs.icon(it)
         }
-        setupDefaultHorizontalList(binding.fragmentAccountIconRecyclerView, iconAdapter)
+
+        val layoutManager = LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false)
+        binding.fragmentAccountIconRecyclerView.let {
+            it.layoutManager = layoutManager
+            it.adapter = iconAdapter
+            it.setItemDecoration(layoutManager.orientation)
+        }
+
         lifecycleScope.launch {
             launch {
                 viewModel.outputs.iconList().collect(iconAdapter::submitList)
@@ -89,7 +97,12 @@ class AccountFragment : Fragment() {
         iconColorAdapter = IconColorRadioAdapter {
             viewModel.inputs.iconColor(it)
         }
-        setupDefaultHorizontalList(binding.fragmentAccountIconColorRecyclerView, iconColorAdapter)
+        val layoutManager = LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false)
+        binding.fragmentAccountIconColorRecyclerView.let {
+            it.layoutManager = layoutManager
+            it.adapter = iconColorAdapter
+            it.setItemDecoration(layoutManager.orientation)
+        }
         lifecycleScope.launch {
             launch {
                 viewModel.outputs.iconColorList().collect(iconColorAdapter::submitList)
@@ -105,7 +118,12 @@ class AccountFragment : Fragment() {
         currencyAdapter = CurrencyRadioAdapter {
             viewModel.inputs.currency(it)
         }
-        setupDefaultHorizontalList(binding.fragmentAccountCurrencyRecyclerView, currencyAdapter)
+        val layoutManager = LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false)
+        binding.fragmentAccountCurrencyRecyclerView.let {
+            it.layoutManager = layoutManager
+            it.adapter = currencyAdapter
+            it.setItemDecoration(layoutManager.orientation)
+        }
 
         lifecycleScope.launch {
             launch {
@@ -113,26 +131,6 @@ class AccountFragment : Fragment() {
             }
             launch {
                 viewModel.outputs.currency().collect { currencyAdapter.selectedItem = it }
-            }
-        }
-    }
-
-    private fun setupDefaultHorizontalList(
-        recyclerView: RecyclerView,
-        adapter: RecyclerView.Adapter<out RecyclerView.ViewHolder>
-    ) {
-        val layoutManager = LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false)
-        recyclerView.layoutManager = layoutManager
-        recyclerView.adapter = adapter
-        setItemDecoration(recyclerView, layoutManager.orientation)
-    }
-
-    private fun setItemDecoration(recyclerView: RecyclerView, orientation: Int) {
-        requireContext().run {
-            val drawable = ContextCompat.getDrawable(this, R.drawable.item_decoration)
-            drawable?.let {
-                val itemDecoration = RadioItemDecoration(drawable, orientation)
-                recyclerView.addItemDecoration(itemDecoration)
             }
         }
     }

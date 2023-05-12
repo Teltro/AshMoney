@@ -10,10 +10,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.ContextCompat
 import androidx.core.view.children
+import androidx.recyclerview.widget.RecyclerView
 import com.example.ashmoney.R
 import com.example.ashmoney.core.MainApp
 import com.example.ashmoney.holder.OperationListHolder
+import com.example.ashmoney.itemDecorations.RadioItemDecoration
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -91,4 +94,14 @@ fun ImageView.fillImageViewWithIconAndSelection(iconResourceName: String, iconCo
 
 fun Double.round100(): Double {
     return (this * 100).roundToInt() / 100.0
+}
+
+fun RecyclerView.setItemDecoration(orientation: Int) {
+    this.context.let {
+        val drawable = ContextCompat.getDrawable(it, R.drawable.item_decoration)
+        drawable?.let {
+            val itemDecoration = RadioItemDecoration(drawable, orientation)
+            this.addItemDecoration(itemDecoration)
+        }
+    }
 }

@@ -57,7 +57,7 @@ interface DashboardViewModel {
                 globalCurrency.value = currencyDao.getById(defaultCurrencyId)
 
                 launch {
-                    operationDao.getPieChartViewFlowByOperationTypeId(2).collect {
+                    operationDao.getPieChartViewFlowByOperationTypeId(2, defaultCurrencyId).collect {
                         pieChartOperationList.value = it
                     }
                 }

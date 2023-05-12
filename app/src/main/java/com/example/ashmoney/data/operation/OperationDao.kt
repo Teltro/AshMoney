@@ -23,10 +23,11 @@ interface OperationDao : BaseDao<OperationEntity> {
     @Query("SELECT * FROM OperationListView")
     fun getAllViewEntityFlow(): Flow<List<OperationListView>>
 
-/*    @Query("SELECT * FROM OperationListView WHERE operation_type_id = :operationTypeId")
-    fun getAllViewEntityFlowByOperationTypeId(operationTypeId: Int): Flow<List<OperationListView>>*/
+    /*    @Query("SELECT * FROM OperationListView WHERE operation_type_id = :operationTypeId")
+        fun getAllViewEntityFlowByOperationTypeId(operationTypeId: Int): Flow<List<OperationListView>>*/
 
-    @Query("""
+    @Query(
+        """
         WITH operation_members AS (
             SELECT 
             main.id as id,
@@ -70,7 +71,13 @@ interface OperationDao : BaseDao<OperationEntity> {
         target_data.name as target_name,
         target_data.icon_resource_name as target_icon_resource_name,
         target_data.icon_color_value as target_icon_color_value,
-        operation.sum * currency_exchange_rate as sum,    
+        operation.sum * currency_exchange_rate as sum,
+        CASE
+            WHEN (operation.active_currency_id != :defaultCurrency AND currency_exchange_rate.exchange_rate IS NOT NULL) THEN
+                operation.sum * currency_exchange_rate.exchange_rate
+            ELSE
+                0.0
+        END as common_currency_sum,
         (operation.sum * operation.currency_exchange_rate) / SUM(operation.sum * operation.currency_exchange_rate) as percent,
         currency_data.name as currency_name
         FROM operation
@@ -93,10 +100,15 @@ interface OperationDao : BaseDao<OperationEntity> {
                 )
         WHERE operation_type_id = :operationTypeId
         GROUP BY operation.id
-        """)
-    fun getPieChartViewFlowByOperationTypeId(operationTypeId: Int, defaultCurrency: Int): Flow<List<OperationPieChartView>>
+        """
+    )
+    fun getPieChartViewFlowByOperationTypeId(
+        operationTypeId: Int,
+        defaultCurrency: Int
+    ): Flow<List<OperationPieChartView>>
 
-    @Query("""
+    @Query(
+        """
         SELECT
         id, 
         sum,
@@ -105,7 +117,8 @@ interface OperationDao : BaseDao<OperationEntity> {
         operation
         WHERE operation_type_id = :operationTypeId
         GROUP BY DATE(date_time)
-    """)
+    """
+    )
     fun getLineChartViewFlowByOperationTypeId(operationTypeId: Int): Flow<List<OperationLineChartView>>
 
 }

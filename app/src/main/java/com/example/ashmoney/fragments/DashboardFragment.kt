@@ -96,34 +96,14 @@ class DashboardFragment : Fragment() {
 
     private fun setupPieChartOperationList() {
         operationPieCharItemAdapter = OperationPieChartItemAdapter()
-        setupDefaultHorizontalList(
-            binding.dashboardFragmentPieChartDataRecyclerView,
-            operationPieCharItemAdapter
-        )
+        with(binding.dashboardFragmentPieChartDataRecyclerView) {
+            layoutManager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
+            adapter = operationPieCharItemAdapter
+        }
 
         lifecycleScope.launch {
             launch {
                 viewModel.outputs.pieChartOperationList().collect(operationPieCharItemAdapter::submitList)
-            }
-        }
-    }
-
-    private fun setupDefaultHorizontalList(
-        recyclerView: RecyclerView,
-        adapter: RecyclerView.Adapter<out RecyclerView.ViewHolder>
-    ) {
-        val layoutManager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
-        recyclerView.layoutManager = layoutManager
-        recyclerView.adapter = adapter
-        //setItemDecoration(recyclerView, layoutManager.orientation)
-    }
-
-    private fun setItemDecoration(recyclerView: RecyclerView, orientation: Int) {
-        requireContext().run {
-            val drawable = ContextCompat.getDrawable(this, R.drawable.item_decoration)
-            drawable?.let {
-                val itemDecoration = RadioItemDecoration(drawable, orientation)
-                recyclerView.addItemDecoration(itemDecoration)
             }
         }
     }

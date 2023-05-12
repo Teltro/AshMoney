@@ -17,6 +17,7 @@ import com.example.ashmoney.R
 import com.example.ashmoney.adapters.OperationListAdapter
 import com.example.ashmoney.databinding.FragmentOperationListBinding
 import com.example.ashmoney.itemDecorations.RadioItemDecoration
+import com.example.ashmoney.utils.setItemDecoration
 import com.example.ashmoney.viewmodels.OperationListViewModel
 import kotlinx.coroutines.launch
 
@@ -47,37 +48,18 @@ class OperationListFragment : Fragment() {
 
     private fun setupOperationList() {
         binding.operationListRecyclerView.let { recyclerView ->
-            recyclerView.layoutManager = LinearLayoutManager(activity)
             val adapter = OperationListAdapter {
                 val bundle = bundleOf("operationId" to it.id)
                 navController.navigate(R.id.operationFragmentDestination, bundle)
             }
-            recyclerView.adapter = adapter
 
-            setupDefaultVerticalList(recyclerView, adapter)
+            val layoutManager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
+            recyclerView.layoutManager = layoutManager
+            recyclerView.adapter = adapter
+            recyclerView.setItemDecoration(layoutManager.orientation)
 
             lifecycleScope.launch {
                 viewModel.outputs.operationList().collect(adapter::submitList)
-            }
-        }
-    }
-
-    private fun setupDefaultVerticalList(
-        recyclerView: RecyclerView,
-        adapter: RecyclerView.Adapter<out RecyclerView.ViewHolder>
-    ) {
-        val layoutManager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
-        recyclerView.layoutManager = layoutManager
-        recyclerView.adapter = adapter
-        setItemDecoration(recyclerView, layoutManager.orientation)
-    }
-
-    private fun setItemDecoration(recyclerView: RecyclerView, orientation: Int) {
-        requireContext().run {
-            val drawable = ContextCompat.getDrawable(this, R.drawable.item_decoration)
-            drawable?.let {
-                val itemDecoration = RadioItemDecoration(drawable, orientation)
-                recyclerView.addItemDecoration(itemDecoration)
             }
         }
     }

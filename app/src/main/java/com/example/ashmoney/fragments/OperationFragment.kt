@@ -22,9 +22,9 @@ import com.example.ashmoney.databinding.FragmentOperationBinding
 import com.example.ashmoney.itemDecorations.RadioItemDecoration
 import com.example.ashmoney.utils.round100
 import com.example.ashmoney.utils.setEnabledForAll
+import com.example.ashmoney.utils.setItemDecoration
 import com.example.ashmoney.viewmodels.OperationViewModel
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 class OperationFragment : Fragment() {
 
@@ -38,8 +38,8 @@ class OperationFragment : Fragment() {
     private lateinit var binding: FragmentOperationBinding
 
     private lateinit var operationTypeAdapter: OperationTypeRadioAdapter
-    private lateinit var accountFromAdapter: AccountRadioAdapter
-    private lateinit var accountToAdapter: AccountRadioAdapter
+    private lateinit var fromAccountAdapter: AccountRadioAdapter
+    private lateinit var toAccountAdapter: AccountRadioAdapter
     private lateinit var operationCategoryAdapter: OperationCategoryRadioAdapter
     private lateinit var currencyAdapter: CurrencyRadioAdapter
 
@@ -84,10 +84,13 @@ class OperationFragment : Fragment() {
         operationTypeAdapter = OperationTypeRadioAdapter {
             viewModel.inputs.operationType(it)
         }
-        setupDefaultHorizontalList(
-            binding.fragmentOperationOperationTypeRecyclerView,
-            operationTypeAdapter
-        )
+
+        val layoutManager = LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false)
+        binding.fragmentOperationOperationTypeRecyclerView.let {
+            it.layoutManager = layoutManager
+            it.adapter = operationTypeAdapter
+            it.setItemDecoration(layoutManager.orientation)
+        }
 
         lifecycleScope.launch {
             launch {
@@ -115,37 +118,46 @@ class OperationFragment : Fragment() {
     }
 
     private fun setupAccountFromList() {
-        accountFromAdapter = AccountRadioAdapter {
+        fromAccountAdapter = AccountRadioAdapter {
             //viewModel.data.accountFrom = it
             viewModel.inputs.fromAccount(it)
         }
-        setupDefaultHorizontalList(
-            binding.fragmentOperationFromAccountRecyclerView,
-            accountFromAdapter
-        )
+
+        val layoutManager = LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false)
+        binding.fragmentOperationFromAccountRecyclerView.let {
+            it.layoutManager = layoutManager
+            it.adapter = fromAccountAdapter
+            it.setItemDecoration(layoutManager.orientation)
+        }
 
         lifecycleScope.launch {
             launch {
-                viewModel.outputs.accountList().collect(accountFromAdapter::submitList)
+                viewModel.outputs.accountList().collect(fromAccountAdapter::submitList)
             }
             launch {
-                viewModel.outputs.fromAccount().collect { accountFromAdapter.selectedItem = it }
+                viewModel.outputs.fromAccount().collect { fromAccountAdapter.selectedItem = it }
             }
         }
     }
 
     private fun setupAccountToList() {
-        accountToAdapter = AccountRadioAdapter {
+        toAccountAdapter = AccountRadioAdapter {
             viewModel.inputs.toAccount(it)
         }
-        setupDefaultHorizontalList(binding.fragmentOperationToAccountRecyclerView, accountToAdapter)
+
+        val layoutManager = LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false)
+        binding.fragmentOperationToAccountRecyclerView.let {
+            it.layoutManager = layoutManager
+            it.adapter = toAccountAdapter
+            it.setItemDecoration(layoutManager.orientation)
+        }
 
         lifecycleScope.launch {
             launch {
-                viewModel.outputs.accountList().collect(accountToAdapter::submitList)
+                viewModel.outputs.accountList().collect(toAccountAdapter::submitList)
             }
             launch {
-                viewModel.outputs.toAccount().collect { accountToAdapter.selectedItem = it }
+                viewModel.outputs.toAccount().collect { toAccountAdapter.selectedItem = it }
             }
         }
     }
@@ -155,10 +167,13 @@ class OperationFragment : Fragment() {
             OperationCategoryRadioAdapter {
                 viewModel.inputs.operationCategory(it)
             }
-        setupDefaultHorizontalList(
-            binding.fragmentOperationOperationCategoryRecyclerView,
-            operationCategoryAdapter
-        )
+
+        val layoutManager = LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false)
+        binding.fragmentOperationOperationCategoryRecyclerView.let {
+            it.layoutManager = layoutManager
+            it.adapter = operationCategoryAdapter
+            it.setItemDecoration(layoutManager.orientation)
+        }
 
         lifecycleScope.launch {
             launch {
@@ -177,10 +192,12 @@ class OperationFragment : Fragment() {
             viewModel.inputs.currency(it)
         }
 
-        setupDefaultHorizontalList(
-            binding.fragmentOperationOperationCurrencyRecyclerView,
-            currencyAdapter
-        )
+        val layoutManager = LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false)
+        binding.fragmentOperationOperationCurrencyRecyclerView.let {
+            it.layoutManager = layoutManager
+            it.adapter = currencyAdapter
+            it.setItemDecoration(layoutManager.orientation)
+        }
 
         lifecycleScope.launch {
             launch {
@@ -188,26 +205,6 @@ class OperationFragment : Fragment() {
             }
             launch {
                 viewModel.outputs.currency().collect { currencyAdapter.selectedItem = it }
-            }
-        }
-    }
-
-    private fun setupDefaultHorizontalList(
-        recyclerView: RecyclerView,
-        adapter: RecyclerView.Adapter<out RecyclerView.ViewHolder>
-    ) {
-        val layoutManager = LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false)
-        recyclerView.layoutManager = layoutManager
-        recyclerView.adapter = adapter
-        setItemDecoration(recyclerView, layoutManager.orientation)
-    }
-
-    private fun setItemDecoration(recyclerView: RecyclerView, orientation: Int) {
-        requireContext().run {
-            val drawable = ContextCompat.getDrawable(this, R.drawable.item_decoration)
-            drawable?.let {
-                val itemDecoration = RadioItemDecoration(drawable, orientation)
-                recyclerView.addItemDecoration(itemDecoration)
             }
         }
     }
