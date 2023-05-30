@@ -9,8 +9,8 @@ data class OperationPieChartView(
     @ColumnInfo(name = "id")
     override val id: Int,
 
-    @ColumnInfo(name = "name")
-    override val name: String?,
+    /*@ColumnInfo(name = "name")
+    override val name: String?,*/
 
     @ColumnInfo(name = "operation_type_id")
     override val operationTypeId: Int,

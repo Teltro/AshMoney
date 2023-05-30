@@ -4,6 +4,9 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
+import com.example.ashmoney.data.converters.Converters
+import java.util.Date
 
 @Entity(
     tableName = "currency_exchange_rate",
@@ -25,5 +28,6 @@ data class CurrencyExchangeRateEntity(
     val exchangeRate: Double,
 
     @ColumnInfo(name = "date_time")
-    val dateTime: String
+    @TypeConverters(Converters::class)
+    val dateTime: Date
 )

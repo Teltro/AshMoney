@@ -3,6 +3,9 @@ package com.example.ashmoney.data.operation
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
+import com.example.ashmoney.data.converters.Converters
+import java.util.Date
 
 @Entity(tableName = "operation")
 data class OperationEntity(
@@ -31,14 +34,15 @@ data class OperationEntity(
     @ColumnInfo(name = "sum")
     val sum: Double,
 
-    @ColumnInfo(name = "currency_exchange_rate")
+    @ColumnInfo(name = "currency_exchange_rate", defaultValue = "1.0")
     val exchangeRateCoefficient: Double = 1.0,
 
     @ColumnInfo(name = "active_currency_id")
     val activeCurrencyId: Int,
 
     @ColumnInfo(name = "date_time")
-    val dateTime: String,
+    @TypeConverters(Converters::class)
+    val dateTime: Date,
 
     @ColumnInfo(name = "note")
     val note: String?

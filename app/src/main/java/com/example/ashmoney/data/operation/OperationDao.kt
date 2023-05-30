@@ -34,16 +34,14 @@ interface OperationDao : BaseDao<OperationEntity> {
             main.name as name,
             icon.resource_name as icon_resource_name,
             icon_color.value as icon_color_value,
-            main.is_account,
-            main.is_operation_category
+            main.type as type
             FROM (
                 SELECT
                     id, 
                     name,
                     icon_id,
                     icon_color_id,
-                    1 as is_account,
-                    0 as is_operation_category
+                    0 as type
                 FROM
                     account
                     
@@ -54,8 +52,7 @@ interface OperationDao : BaseDao<OperationEntity> {
                     name,
                     icon_id,
                     icon_color_id,
-                    0 as is_account,
-                    1 as is_operation_category
+                    1 as type
                 FROM
                     operation_category
                     
@@ -65,20 +62,25 @@ interface OperationDao : BaseDao<OperationEntity> {
         )
         
         SELECT
-        operation.id,
-        operation.name,
+        operation.id as id,
         operation_type_id,
         target_data.name as target_name,
         target_data.icon_resource_name as target_icon_resource_name,
         target_data.icon_color_value as target_icon_color_value,
-        operation.sum * currency_exchange_rate as sum,
+        SUM(operation.sum * operation.currency_exchange_rate) as sum,
         CASE
             WHEN (operation.active_currency_id != :defaultCurrency AND currency_exchange_rate.exchange_rate IS NOT NULL) THEN
                 operation.sum * currency_exchange_rate.exchange_rate
             ELSE
                 0.0
         END as common_currency_sum,
-        (operation.sum * operation.currency_exchange_rate) / SUM(operation.sum * operation.currency_exchange_rate) as percent,
+        (operation.sum * operation.currency_exchange_rate) /
+        (
+            SELECT 
+            SUM(sum * currency_exchange_rate) 
+            FROM operation
+            WHERE operation_type_id = :operationTypeId
+        ) as percent,
         currency_data.name as currency_name
         FROM operation
         LEFT JOIN active_currency as currency_data ON currency_data.id = operation.active_currency_id
@@ -88,18 +90,18 @@ interface OperationDao : BaseDao<OperationEntity> {
         LEFT JOIN operation_members AS target_data 
             ON (
                     (
-                        operation.operation_type_id = 1 AND 
+                        operation.operation_type_id = 2 AND 
                         operation.operation_category_id = target_data.id AND 
-                        target_data.is_operation_category = 1
+                        target_data.type = 1
                     ) OR
                     (
-                        operation.operation_type_id IN (2, 3) AND 
-                        operation.from_account_id = target_data.id AND 
-                        target_data.is_account = 1
+                        operation.operation_type_id IN (1, 3) AND 
+                        operation.to_account_id = target_data.id AND 
+                        target_data.type = 0
                     )
                 )
         WHERE operation_type_id = :operationTypeId
-        GROUP BY operation.id
+        GROUP BY operation.from_account_id, operation.to_account_id, operation.operation_category_id
         """
     )
     fun getPieChartViewFlowByOperationTypeId(

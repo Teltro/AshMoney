@@ -353,7 +353,7 @@ interface OperationViewModel {
                     name = _name,
                     exchangeRateCoefficient = _currencyExchangeRate,
                     activeCurrencyId = _currency.id,
-                    dateTime = Date().toIsoString(),
+                    dateTime = Date(),
                     note = _note
                 )
             } else

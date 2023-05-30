@@ -185,8 +185,9 @@ class MainApp : Application() {
                     toAccountId = accountList[0].id,
                     operationCategoryId = operationCategoryList[3].id,
                     sum = 5.0,
+                    exchangeRateCoefficient = 1.0,
                     activeCurrencyId = activeCurrencyList[1].id,
-                    dateTime = Date().toIsoString(),
+                    dateTime = Date(),
                     note = null
                 ),
                 OperationEntity(
@@ -197,8 +198,9 @@ class MainApp : Application() {
                     toAccountId = accountList[0].id,
                     operationCategoryId = operationCategoryList[4].id,
                     sum = 15.0,
+                    exchangeRateCoefficient = 1.0,
                     activeCurrencyId = activeCurrencyList[1].id,
-                    dateTime = Date().toIsoString(),
+                    dateTime = Date(),
                     note = null
                 ),
                 OperationEntity(
@@ -209,8 +211,9 @@ class MainApp : Application() {
                     toAccountId = null,
                     operationCategoryId = operationCategoryList[2].id,
                     sum = 2.0,
+                    exchangeRateCoefficient = 1.0,
                     activeCurrencyId = activeCurrencyList[1].id,
-                    dateTime = Date().toIsoString(),
+                    dateTime = Date(),
                     note = null
                 ),
                 OperationEntity(
@@ -221,8 +224,9 @@ class MainApp : Application() {
                     toAccountId = null,
                     operationCategoryId = operationCategoryList[0].id,
                     sum = 3.0,
+                    exchangeRateCoefficient = 1.0,
                     activeCurrencyId = activeCurrencyList[1].id,
-                    dateTime = Date().toIsoString(),
+                    dateTime = Date(),
                     note = null
                 ),
                 OperationEntity(
@@ -233,8 +237,9 @@ class MainApp : Application() {
                     toAccountId = accountList[1].id,
                     operationCategoryId = null,
                     sum = 4.0,
+                    exchangeRateCoefficient = 1.0,
                     activeCurrencyId = activeCurrencyList[1].id,
-                    dateTime = Date().toIsoString(),
+                    dateTime = Date(),
                     note = null
                 ),
                 OperationEntity(
@@ -245,8 +250,9 @@ class MainApp : Application() {
                     toAccountId = accountList[2].id,
                     operationCategoryId = null,
                     sum = 4.0,
+                    exchangeRateCoefficient = 1.0,
                     activeCurrencyId = activeCurrencyList[1].id,
-                    dateTime = Date().toIsoString(),
+                    dateTime = Date(),
                     note = null
                 ),
             )
@@ -256,13 +262,13 @@ class MainApp : Application() {
                     currencyFromId = activeCurrencyList[0].id,
                     currencyToId = activeCurrencyList[1].id,
                     exchangeRate = 3.0,
-                    dateTime = Date().toIsoString()
+                    dateTime = Date()
                 ),
                 CurrencyExchangeRateEntity(
                     currencyFromId = activeCurrencyList[1].id,
                     currencyToId = activeCurrencyList[0].id,
                     exchangeRate = 1 / 3.0,
-                    dateTime = Date().toIsoString()
+                    dateTime = Date()
                 )
 
             )

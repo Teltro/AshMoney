@@ -4,4 +4,6 @@
     <size
         android:height="48dip"
         android:width="48dip" />
+    <solid
+        android:color="#33FFFFFF"/>
 </shape>

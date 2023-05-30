@@ -18,6 +18,7 @@ import com.example.ashmoney.core.MainApp
 import com.example.ashmoney.holder.OperationListHolder
 import com.example.ashmoney.itemDecorations.RadioItemDecoration
 import java.text.DateFormat
+import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
@@ -71,12 +72,15 @@ fun String.fromIsoToDate(): Date? {
 }
 
 fun ImageView.fillImageViewWithIcon(iconResourceName: String, iconColorValue: String) {
-    val layerDrawable = this.background as LayerDrawable
+    /*val layerDrawable = this.background as LayerDrawable
     val circleDrawable =
-        layerDrawable.findDrawableByLayerId(R.id.radio_icon_circle_selection_circle) as GradientDrawable
+        layerDrawable.findDrawableByLayerId(R.id.radio_icon_circle_selection_circle) as GradientDrawable*/
 
     val iconDrawable = this.context.getDrawable(iconResourceName) as Drawable // ??
     this.setImageDrawable(iconDrawable)
+
+    val color = Color.parseColor(iconColorValue)
+    iconDrawable.setTint(color)
 }
 
 fun ImageView.fillImageViewWithIconAndSelection(iconResourceName: String, iconColorValue: String, selectionCircleStrokeWidth: Int) {
@@ -94,6 +98,10 @@ fun ImageView.fillImageViewWithIconAndSelection(iconResourceName: String, iconCo
 
 fun Double.round100(): Double {
     return (this * 100).roundToInt() / 100.0
+}
+
+fun Double.toPercentString(): String {
+    return DecimalFormat("0.##").format((this * 1000).roundToInt() / 10.0) + "%"
 }
 
 fun RecyclerView.setItemDecoration(orientation: Int) {

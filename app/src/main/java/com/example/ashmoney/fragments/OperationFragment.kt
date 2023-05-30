@@ -100,21 +100,6 @@ class OperationFragment : Fragment() {
                 viewModel.outputs.operationType().collect { operationTypeAdapter.selectedItem = it }
             }
         }
-
-        /*lifecycleScope.launch {
-            viewModel.operationTypeList.collect { operationTypeList ->
-                if (viewModel.state.value == OperationViewModel.State.CREATE) {
-                    val operationSelectedType = viewModel.selectedOperationType.value
-
-                    if (operationTypeList.isNotEmpty() && (operationSelectedType == null || !operationTypeList.contains(
-                            operationSelectedType
-                        ))
-                    )
-                        operationTypeAdapter.selectedItem = operationTypeList[0]
-                }
-                operationTypeAdapter.submitList(operationTypeList)
-            }
-        }*/
     }
 
     private fun setupAccountFromList() {

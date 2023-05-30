@@ -3,7 +3,7 @@ package com.example.ashmoney.models.ui
 interface OperationPieChartUIModel : RecyclerViewUIModel {
 
     val id: Int
-    val name: String?
+    //val name: String?
     val operationTypeId: Int
     val targetName: String
     val targetIconResourceName: String
