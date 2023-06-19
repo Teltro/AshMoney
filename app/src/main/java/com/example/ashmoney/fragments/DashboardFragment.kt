@@ -20,11 +20,20 @@ import com.example.ashmoney.databinding.FragmentDashboardBinding
 import com.example.ashmoney.itemDecorations.RadioItemDecoration
 import com.example.ashmoney.utils.round100
 import com.example.ashmoney.viewmodels.DashboardViewModel
+import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
+import com.github.mikephil.charting.formatter.IAxisValueFormatter
+import com.github.mikephil.charting.formatter.ValueFormatter
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoField
 import kotlin.math.roundToInt
 
 class DashboardFragment : Fragment() {
@@ -54,6 +63,7 @@ class DashboardFragment : Fragment() {
         setupTotalSumCurrency()
         setupPieChart()
         setupPieChartOperationList()
+        setupLineChart()
     }
 
     private fun setupTotalSumField() {
@@ -110,21 +120,33 @@ class DashboardFragment : Fragment() {
             setDrawMarkers(false)
             legend.isEnabled = false
             description.isEnabled = false
+            xAxis.valueFormatter = object: ValueFormatter() {
+                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                override fun getFormattedValue(value: Float): String {
+                    return formatter.format(LocalDate.ofEpochDay(value.toLong()))
+                }
+            }
+            xAxis.position = XAxis.XAxisPosition.BOTTOM
+            xAxis.labelRotationAngle = 330f
+            xAxis.isGranularityEnabled = true
+            xAxis.setCenterAxisLabels(false)
+
+            right
         }
 
         lifecycleScope.launch {
             viewModel.outputs.lineChartOperationList().collect { operationList ->
                 //val map = operationList.associateBy({it.toName}, {it.sum})
-                /*val lineEntryList = operationList.map { Entry(it.dateTime, it.sum) }
-                val pieEntryList = operationList.map {  PieEntry(it.sum.toFloat(), it.targetName) }
-                val pieDataSet = PieDataSet(pieEntryList, "Hello")
-                pieDataSet.colors = operationList.map { Color.parseColor(it.targetIconColorValue) }
-                val pieData = PieData(pieDataSet)
-                pieData.setDrawValues(false)
-                with (binding.dashboardFragmentPieChart) {
-                    data = pieData
+                val lineEntryList = operationList.map { Entry((it.dateTime.getLong(ChronoField.DAY_OF_YEAR)).toFloat(), it.sum.toFloat()) }
+                //val pieEntryList = operationList.map {  PieEntry(it.sum.toFloat(), it.targetName) }
+                val lineDataSet = LineDataSet(lineEntryList, "Hello")
+                lineDataSet.setDrawValues(false)
+                //lineDataSet.colors = operationList.map { Color.parseColor(it) }
+                val lineData = LineData(lineDataSet)
+                with (binding.dashboardFragmentLineChart) {
+                    data = lineData
                     invalidate()
-                }*/
+                }
 
             }
         }

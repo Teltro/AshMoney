@@ -6,6 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.example.ashmoney.data.converters.Converters
+import java.time.LocalDateTime
 import java.util.Date
 
 @Entity(
@@ -29,5 +30,5 @@ data class CurrencyExchangeRateEntity(
 
     @ColumnInfo(name = "date_time")
     @TypeConverters(Converters::class)
-    val dateTime: Date
+    val dateTime: LocalDateTime
 )

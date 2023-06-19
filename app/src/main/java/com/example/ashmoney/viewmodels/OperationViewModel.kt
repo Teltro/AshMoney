@@ -13,6 +13,7 @@ import com.example.ashmoney.utils.OperationTypeId
 import com.example.ashmoney.utils.toIsoString
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 import java.util.*
 
 interface OperationViewModel {
@@ -353,7 +354,7 @@ interface OperationViewModel {
                     name = _name,
                     exchangeRateCoefficient = _currencyExchangeRate,
                     activeCurrencyId = _currency.id,
-                    dateTime = Date(),
+                    dateTime = LocalDateTime.now(),
                     note = _note
                 )
             } else

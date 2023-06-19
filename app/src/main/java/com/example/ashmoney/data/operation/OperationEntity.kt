@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.example.ashmoney.data.converters.Converters
+import java.time.LocalDateTime
 import java.util.Date
 
 @Entity(tableName = "operation")
@@ -42,7 +43,7 @@ data class OperationEntity(
 
     @ColumnInfo(name = "date_time")
     @TypeConverters(Converters::class)
-    val dateTime: Date,
+    val dateTime: LocalDateTime,
 
     @ColumnInfo(name = "note")
     val note: String?

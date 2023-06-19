@@ -14,6 +14,7 @@ import com.example.ashmoney.data.operationCategory.OperationCategoryEntity
 import com.example.ashmoney.data.operationType.OperationTypeEntity
 import com.example.ashmoney.utils.toIsoString
 import kotlinx.coroutines.*
+import java.time.LocalDateTime
 import java.util.*
 
 class MainApp : Application() {
@@ -187,7 +188,7 @@ class MainApp : Application() {
                     sum = 5.0,
                     exchangeRateCoefficient = 1.0,
                     activeCurrencyId = activeCurrencyList[1].id,
-                    dateTime = Date(),
+                    dateTime = LocalDateTime.now().minusDays(1),
                     note = null
                 ),
                 OperationEntity(
@@ -200,7 +201,33 @@ class MainApp : Application() {
                     sum = 15.0,
                     exchangeRateCoefficient = 1.0,
                     activeCurrencyId = activeCurrencyList[1].id,
-                    dateTime = Date(),
+                    dateTime = LocalDateTime.now(),
+                    note = null
+                ),
+                OperationEntity(
+                    name = null,
+                    periodId = null,
+                    operationTypeId = operationTypeList[0].id,
+                    fromAccountId = null,
+                    toAccountId = accountList[1].id,
+                    operationCategoryId = operationCategoryList[3].id,
+                    sum = 2.0,
+                    exchangeRateCoefficient = 1.0,
+                    activeCurrencyId = activeCurrencyList[1].id,
+                    dateTime = LocalDateTime.now().plusDays(2),
+                    note = null
+                ),
+                OperationEntity(
+                    name = null,
+                    periodId = null,
+                    operationTypeId = operationTypeList[0].id,
+                    fromAccountId = null,
+                    toAccountId = accountList[0].id,
+                    operationCategoryId = operationCategoryList[2].id,
+                    sum = 1.0,
+                    exchangeRateCoefficient = 1.0,
+                    activeCurrencyId = activeCurrencyList[1].id,
+                    dateTime = LocalDateTime.now().minusDays(2),
                     note = null
                 ),
                 OperationEntity(
@@ -210,10 +237,36 @@ class MainApp : Application() {
                     fromAccountId = accountList[0].id,
                     toAccountId = null,
                     operationCategoryId = operationCategoryList[2].id,
-                    sum = 2.0,
+                    sum = 25.0,
                     exchangeRateCoefficient = 1.0,
                     activeCurrencyId = activeCurrencyList[1].id,
-                    dateTime = Date(),
+                    dateTime = LocalDateTime.now().plusDays(1),
+                    note = null
+                ),
+                OperationEntity(
+                    name = null,
+                    periodId = null,
+                    operationTypeId = operationTypeList[1].id,
+                    fromAccountId = accountList[0].id,
+                    toAccountId = null,
+                    operationCategoryId = operationCategoryList[3].id,
+                    sum = 13.0,
+                    exchangeRateCoefficient = 1.0,
+                    activeCurrencyId = activeCurrencyList[1].id,
+                    dateTime = LocalDateTime.now().minusDays(2),
+                    note = null
+                ),
+                OperationEntity(
+                    name = null,
+                    periodId = null,
+                    operationTypeId = operationTypeList[1].id,
+                    fromAccountId = accountList[2].id,
+                    toAccountId = null,
+                    operationCategoryId = operationCategoryList[0].id,
+                    sum = 9.0,
+                    exchangeRateCoefficient = 1.0,
+                    activeCurrencyId = activeCurrencyList[1].id,
+                    dateTime = LocalDateTime.now(),
                     note = null
                 ),
                 OperationEntity(
@@ -223,10 +276,10 @@ class MainApp : Application() {
                     fromAccountId = accountList[1].id,
                     toAccountId = null,
                     operationCategoryId = operationCategoryList[0].id,
-                    sum = 3.0,
+                    sum = 7.0,
                     exchangeRateCoefficient = 1.0,
                     activeCurrencyId = activeCurrencyList[1].id,
-                    dateTime = Date(),
+                    dateTime = LocalDateTime.now().plusDays(2),
                     note = null
                 ),
                 OperationEntity(
@@ -239,7 +292,7 @@ class MainApp : Application() {
                     sum = 4.0,
                     exchangeRateCoefficient = 1.0,
                     activeCurrencyId = activeCurrencyList[1].id,
-                    dateTime = Date(),
+                    dateTime = LocalDateTime.now().minusDays(1),
                     note = null
                 ),
                 OperationEntity(
@@ -252,7 +305,7 @@ class MainApp : Application() {
                     sum = 4.0,
                     exchangeRateCoefficient = 1.0,
                     activeCurrencyId = activeCurrencyList[1].id,
-                    dateTime = Date(),
+                    dateTime = LocalDateTime.now().plusDays(1),
                     note = null
                 ),
             )
@@ -262,13 +315,13 @@ class MainApp : Application() {
                     currencyFromId = activeCurrencyList[0].id,
                     currencyToId = activeCurrencyList[1].id,
                     exchangeRate = 3.0,
-                    dateTime = Date()
+                    dateTime = LocalDateTime.now()
                 ),
                 CurrencyExchangeRateEntity(
                     currencyFromId = activeCurrencyList[1].id,
                     currencyToId = activeCurrencyList[0].id,
                     exchangeRate = 1 / 3.0,
-                    dateTime = Date()
+                    dateTime = LocalDateTime.now()
                 )
 
             )

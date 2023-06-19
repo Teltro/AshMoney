@@ -20,6 +20,8 @@ import com.example.ashmoney.itemDecorations.RadioItemDecoration
 import java.text.DateFormat
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.math.roundToInt
 
@@ -61,14 +63,26 @@ fun Date.toIsoString(): String {
     return dateFormat.format(this)
 }
 
+fun LocalDateTime.toIsoString(): String {
+    return this.format(DateTimeFormatter.ISO_DATE_TIME)
+}
+
 fun Date.toDefaultString(): String {
     val dateFormat: DateFormat = SimpleDateFormat(DEFAULT_DATE_TIME)
     return dateFormat.format(this)
 }
 
+fun LocalDateTime.toDefaultString(): String {
+    return this.format(DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME))
+}
+
 fun String.fromIsoToDate(): Date? {
     val dateFormat: DateFormat = SimpleDateFormat(ISO)
     return dateFormat.parse(this)
+}
+
+fun String.fromIsoToLocalDateTime(): LocalDateTime? {
+    return LocalDateTime.parse(this, DateTimeFormatter.ISO_DATE_TIME)
 }
 
 fun ImageView.fillImageViewWithIcon(iconResourceName: String, iconColorValue: String) {
