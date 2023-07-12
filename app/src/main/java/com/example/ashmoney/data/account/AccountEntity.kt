@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 import com.example.ashmoney.models.ui.AccountUIModel
 
 @Entity(tableName = "account")
-class AccountEntity(
+data class AccountEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
     val id: Int = 0,

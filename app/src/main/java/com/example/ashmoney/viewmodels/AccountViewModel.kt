@@ -59,7 +59,7 @@ interface AccountViewModel {
         private var currentAccountId: Int? = null
         private var accountEntity: AccountWithAllRelations? = null
         private var state = MutableStateFlow(State.NONE)
-        private val uiState = MutableStateFlow<UIState>(UIState.none())
+        private val uiState = MutableStateFlow(UIState.none())
         private val name = MutableStateFlow("")
         private val icon = MutableStateFlow<IconUIModel?>(null)
         private val iconList = MutableStateFlow<List<IconUIModel>>(emptyList())

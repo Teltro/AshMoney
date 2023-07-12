@@ -10,6 +10,8 @@ import com.example.ashmoney.data.activeCurrency.ActiveCurrencyDao
 import com.example.ashmoney.data.activeCurrency.ActiveCurrencyEntity
 import com.example.ashmoney.data.currencyExchageRate.CurrencyExchangeRateDao
 import com.example.ashmoney.data.currencyExchageRate.CurrencyExchangeRateEntity
+import com.example.ashmoney.data.dashboardConfig.DashboardConfigDao
+import com.example.ashmoney.data.dashboardConfig.DashboardConfigEntity
 import com.example.ashmoney.data.icon.IconDao
 import com.example.ashmoney.data.icon.IconEntity
 import com.example.ashmoney.data.iconColor.IconColorDao
@@ -31,7 +33,8 @@ import com.example.ashmoney.data.operationType.OperationTypeEntity
         IconEntity::class,
         OperationTypeEntity::class,
         OperationCategoryEntity::class,
-        OperationEntity::class
+        OperationEntity::class,
+        DashboardConfigEntity::class
     ],
     views = [
         OperationListView::class
@@ -47,6 +50,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun operationTypeDao(): OperationTypeDao
     abstract fun operationCategoryDao(): OperationCategoryDao
     abstract fun operationDao(): OperationDao
+    abstract fun dashboardConfigDao(): DashboardConfigDao
 
     companion object {
         val instance by lazy {
